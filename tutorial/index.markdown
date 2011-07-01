@@ -1,11 +1,10 @@
 ---
 title: scaleApp usage
+subtitle: Usage
 layout: base
 ---
 
-## Usage
-
-### Basic usage
+# Basic usage
 
 Link scaleApp.full.min.js in your HTML head section:
 
@@ -55,7 +54,7 @@ You can also pass a callback function:
       // do something when all modules were initialized
     });
 
-### MVC
+# MVC
 
 If your module is more complex, you might want to split it into models and views.
 So use your current module as a controller and pass your models and views with the option object.
@@ -117,7 +116,7 @@ If you defined a model on registration, your model is already extended, so you c
 	    return { init: init, destroy: destroy, update:update };		
     })();
 
-### Publish/Subscribe
+# Publish/Subscribe
 
 If the module needs to communicate with others, you can use the 'publish' and 'subscribe' methods.
 
@@ -142,7 +141,7 @@ If the module needs to communicate with others, you can use the 'publish' and 's
       sb.subscribe( "aNiceTopic", messageHandler );
     };
 
-### i18n
+# i18n
 
 If your application has to support multiple languages, you can pass an objects containing the localized strings 
 with the options object.
@@ -165,7 +164,7 @@ You can set the language globally by using the 'setLanguage' method:
 
     scaleApp.i18n.setLanguage( "de" );
 
-### hotkeys
+# hotkeys
 
 For handling hotkeys, you simply can register them like this:
 
@@ -176,7 +175,7 @@ If you want to trigger an event by hotkeys, you can simply do it in that way:
 
     scaleApp.hotkeys( "alt+c", "myTopic", myData, "keydown" );
 
-### templating
+# templating
 
 Create a HTML-File with placeholders on your server.
 

@@ -63,7 +63,7 @@ You can try out the [sample application](http://www.scaleapp.org/demo/fast/) tha
 * [scaleApp API Documentation](doc/0.2)
 * [Usage](tutorial/)
 
-## Licence
+# Licence
 
 scaleApp is licensed under the [MIT license](https://github.com/flosse/scaleApp/raw/master/LICENSE.txt).
 
