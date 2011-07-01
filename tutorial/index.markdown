@@ -1,5 +1,5 @@
 ---
-title: scaleApp usage
+title: scaleApp
 subtitle: Usage
 layout: base
 ---

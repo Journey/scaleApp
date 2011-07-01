@@ -55,6 +55,13 @@ ul {
         text-shadow: rgba(0,0,0,.3) 0 2px 3px;
         display: inline-block;
         margin: 0;
+
+      a, a:visited {
+        color: #fff;
+        text-decoration: none;
+        border: none;
+      }
+
     }
 
     p.subtitle {
@@ -64,6 +71,7 @@ ul {
         font-style: italic;  
         display: inline-block;
         margin: 0;
+        margin-left: 1em;
     }
  
 }
