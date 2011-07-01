@@ -30,7 +30,7 @@ scaleApp explicitly uses jQuery as base library. Therefore you can use the full 
 
 # Quick Links
 
-* [Latest documentation](scaleApp/doc/0.2)
+* [Latest documentation](doc/0.2)
 * [GitHub project page](https://github.com/flosse/scaleApp)
 * [Bug tracker](https://github.com/flosse/scaleApp/issues)
 
@@ -40,8 +40,8 @@ scaleApp explicitly uses jQuery as base library. Therefore you can use the full 
 
 The latest release is **0.2**.
 
-* [scaleApp.full.min.js](https://github.com/flosse/scaleApp/blob/v0.2/build/scaleApp.full.min.js) - scaleApp including jQuery 1.6.2 and plugin dependencies.
-* [scaleApp.min.js](https://github.com/flosse/scaleApp/blob/v0.2/build/scaleApp.min.js) - scaleApp without dependencies.
+* [scaleApp.full.min.js](https://github.com/flosse/scaleApp/raw/v0.2/build/scaleApp.full.min.js) - scaleApp including jQuery 1.6.2 and plugin dependencies.
+* [scaleApp.min.js](https://github.com/flosse/scaleApp/raw/v0.2/build/scaleApp.min.js) - scaleApp without dependencies.
 
 Older releases can be found on the [project downloads page](https://github.com/flosse/scaleApp/downloads).
 
@@ -52,8 +52,8 @@ You can try out the [sample application](http://www.scaleapp.org/demo/fast/) tha
 
 # Documentation
 
-* [scaleApp API Documentation](scaleApp/doc/0.2)
-* [Usage](scaleApp/tutorial)
+* [scaleApp API Documentation](doc/0.2)
+* [Usage](tutorial/)
 
 ## Licence
 
