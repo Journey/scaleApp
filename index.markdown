@@ -46,7 +46,7 @@ If you like the following features, scaleApp might be the right choice for you:
 + modules can be tested separately
 + replacing any module without affecting other modules
 + multi language UIs
-+ supports the Model–View–Controller pattern
++ supports the Model-View-Controller pattern
 
 # Demo
 
