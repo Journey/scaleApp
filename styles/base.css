@@ -1,7 +1,7 @@
 body {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 18px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.8;
   background: #eee;
   color: #555;
   margin: 0;
@@ -41,7 +41,7 @@ ul {
   -moz-border-radius: 0em 0em 2em 2em;
   color: #fff; }
   #header h1 {
-    font-size: 72px;
+    font-size: 60px;
     text-shadow: rgba(0, 0, 0, 0.3) 0 2px 3px;
     display: inline-block;
     margin: 0; }
@@ -50,8 +50,8 @@ ul {
       text-decoration: none;
       border: none; }
   #header p.subtitle {
-    font-size: 27px;
-    line-height: 1;
+    font-size: 22.5px;
+    line-height: 1.2;
     font-style: italic;
     display: inline-block;
     margin: 0;
@@ -60,8 +60,8 @@ ul {
 #content {
   margin-top: 2em; }
   #content h1 {
-    font-size: 27px;
-    line-height: 1;
+    font-size: 22.5px;
+    line-height: 1.2;
     margin-top: 2em; }
   #content h2 {
     font-size: 21px;
@@ -71,6 +71,9 @@ ul {
     line-height: 1.5; }
 
 code {
+  display: inline-block; }
+
+pre code {
   display: block;
   border: 1px solid #AAA;
   padding: 0.8em;

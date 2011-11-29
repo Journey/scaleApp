@@ -1,0 +1,34 @@
+---
+title: scaleApp
+subtitle: i18n Plugin
+layout: base
+---
+
+# Multi language UIs
+
+Link `scaleApp.i18n.min.js` in your HTML file:
+
+    <script src="scaleApp.min.js"></script>
+    <script src="scaleApp.i18n.min.js"></script>
+
+If your application has to support multiple languages, you can pass an objects 
+containing the localized strings with the options object.
+
+    var myLocalization =
+    {
+      en: { welcome: "Welcome", ... },
+      de: { welcome: "Willkommen", ... },
+      ...
+    }
+    ...
+    scaleApp.register( "moduleId", myModule, { i18n: myLocalization } );
+
+Now you can access these strings easily trough the sandbox using the `_` method.
+Depending on which language is set globally it returns the corresponding 
+localized string.
+
+    sb._("myStringId");
+
+You can set the language globally by using the `setLanguage` method:
+
+    scaleApp.i18n.setLanguage( "de" );

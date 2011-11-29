@@ -1,4 +1,4 @@
-$base-size: 18px;
+$base-size: 15px;
 $rhythm: 27px;
 
 body {
@@ -100,6 +100,10 @@ ul {
 }
 
 code{
+  display: inline-block;
+}
+
+pre code{
   display: block;
   border: 1px solid #AAA;
   padding: 0.8em;
