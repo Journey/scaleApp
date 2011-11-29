@@ -22,7 +22,7 @@ it is comfortable to maintain and scale.
 * [i18n Plugin](tutorial/i18n.html) - a quick introduction
 * [GitHub project page](https://github.com/flosse/scaleApp)
 * [Bug tracker](https://github.com/flosse/scaleApp/issues)
-* [Source code documentation](doc/0.3)
+* [Source code documentation](doc/0.3/scaleApp.core.html)
 
 # Downloads
 
