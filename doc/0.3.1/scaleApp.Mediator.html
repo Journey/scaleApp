@@ -1,0 +1,80 @@
+<!DOCTYPE html>  <html> <head>   <title>scaleApp.Mediator.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="scaleApp.dom.html">                 scaleApp.dom.coffee               </a>                                           <a class="source" href="scaleApp.i18n.html">                 scaleApp.i18n.coffee               </a>                                           <a class="source" href="scaleApp.mvc.html">                 scaleApp.mvc.coffee               </a>                                           <a class="source" href="scaleApp.util.html">                 scaleApp.util.coffee               </a>                                           <a class="source" href="scaleApp.Mediator.html">                 scaleApp.Mediator.coffee               </a>                                           <a class="source" href="scaleApp.Sandbox.html">                 scaleApp.Sandbox.coffee               </a>                                           <a class="source" href="scaleApp.core.html">                 scaleApp.core.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               scaleApp.Mediator.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="k">class</span> <span class="nx">Mediator</span>
+
+  <span class="nv">constructor: </span><span class="nf">(obj) -&gt;</span>
+    <span class="vi">@channels = </span><span class="p">{}</span>
+    <span class="nx">@installTo</span> <span class="nx">obj</span> <span class="k">if</span> <span class="nx">obj</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Subscribe to a topic</h2>
+
+<p>Parameters:</p>
+
+<ul>
+<li>(String) topic      - The topic name</li>
+<li>(Function) callback - The function that gets called if an other module
+                    publishes to the specified topic</li>
+<li>(Object) context    - The context the function(s) belongs to</li>
+</ul>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">subscribe: </span><span class="nf">(channel, fn, context=@) -&gt;</span>
+
+    <span class="nx">@channels</span><span class="p">[</span><span class="nx">channel</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="nx">unless</span> <span class="nx">@channels</span><span class="p">[</span><span class="nx">channel</span><span class="p">]</span><span class="o">?</span>
+    <span class="nv">that = </span><span class="err">@</span>
+
+    <span class="k">if</span> <span class="nx">channel</span> <span class="k">instanceof</span> <span class="nb">Array</span>
+      <span class="nx">@subscribe</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">fn</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">in</span> <span class="nx">channel</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="k">typeof</span> <span class="nx">channel</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+      <span class="nx">@subscribe</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">for</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">of</span> <span class="nx">channel</span>
+    <span class="k">else</span>
+      <span class="nv">subscription = </span><span class="p">{</span> <span class="nv">context: </span><span class="nx">context</span><span class="p">,</span> <span class="nv">callback: </span><span class="nx">fn</span> <span class="p">}</span>
+      <span class="p">(</span>
+        <span class="nv">attach: </span><span class="o">-&gt;</span> <span class="nx">that</span><span class="p">.</span><span class="nx">channels</span><span class="p">[</span><span class="nx">channel</span><span class="p">].</span><span class="nx">push</span> <span class="nx">subscription</span><span class="p">;</span> <span class="err">@</span>
+        <span class="nv">detach: </span><span class="o">-&gt;</span> <span class="nx">Mediator</span><span class="p">.</span><span class="nx">rm</span> <span class="nx">that</span><span class="p">,</span> <span class="nx">channel</span><span class="p">,</span> <span class="nx">subscription</span><span class="p">.</span><span class="nx">callback</span><span class="p">;</span> <span class="err">@</span>
+      <span class="p">).</span><span class="nx">attach</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>Unsubscribe from a topic</h2>
+
+<p>Parameters:</p>
+
+<ul>
+<li>(String) topic      - The topic name</li>
+<li>(Function) callback - The function that gets called if an other module
+                    publishes to the specified topic</li>
+</ul>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">unsubscribe: </span><span class="nf">(ch, cb) -&gt;</span>
+    <span class="k">switch</span> <span class="k">typeof</span> <span class="nx">ch</span>
+      <span class="k">when</span> <span class="s2">&quot;string&quot;</span>
+        <span class="nx">Mediator</span><span class="p">.</span><span class="nx">rm</span> <span class="err">@</span><span class="p">,</span><span class="nx">ch</span><span class="p">,</span><span class="nx">cb</span> <span class="k">if</span> <span class="k">typeof</span> <span class="nx">cb</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+        <span class="nx">Mediator</span><span class="p">.</span><span class="nx">rm</span> <span class="err">@</span><span class="p">,</span><span class="nx">ch</span>    <span class="k">if</span> <span class="k">typeof</span> <span class="nx">cb</span> <span class="o">is</span> <span class="s2">&quot;undefined&quot;</span>
+      <span class="k">when</span> <span class="s2">&quot;function&quot;</span>  <span class="k">then</span> <span class="nx">Mediator</span><span class="p">.</span><span class="nx">rm</span> <span class="err">@</span><span class="p">,</span><span class="nx">id</span><span class="p">,</span><span class="nx">ch</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">@channels</span>
+      <span class="k">when</span> <span class="s2">&quot;undefined&quot;</span> <span class="k">then</span> <span class="nx">Mediator</span><span class="p">.</span><span class="nx">rm</span> <span class="err">@</span><span class="p">,</span><span class="nx">id</span>    <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">@channels</span>
+    <span class="err">@</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>Publish an event</h2>
+
+<p>Parameters:
+(String) topic             - The topic name
+(Object) data              - The data that gets published
+(Boolean) publishReference - If the data should be passed as a reference to
+                             the other modules this parameter has to be set
+                             to <em>true</em>.
+                             By default the data object gets copied so that
+                             other modules can't influence the original
+                             object.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">publish: </span><span class="nf">(channel, data, publishReference) -&gt;</span>
+
+    <span class="k">if</span> <span class="nx">@channels</span><span class="p">[</span><span class="nx">channel</span><span class="p">]</span><span class="o">?</span>
+      <span class="k">for</span> <span class="nx">subscription</span> <span class="k">in</span> <span class="nx">@channels</span><span class="p">[</span><span class="nx">channel</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nx">publishReference</span> <span class="o">isnt</span> <span class="kc">true</span> <span class="o">and</span> <span class="k">typeof</span> <span class="nx">data</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+          <span class="k">if</span> <span class="nx">data</span> <span class="k">instanceof</span> <span class="nb">Array</span>
+            <span class="nv">copy = </span><span class="p">(</span><span class="nx">v</span> <span class="k">for</span> <span class="nx">v</span> <span class="k">in</span> <span class="nx">data</span><span class="p">)</span>
+          <span class="k">else</span>
+            <span class="nv">copy = </span><span class="p">{}</span>
+            <span class="nx">copy</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">of</span> <span class="nx">data</span>
+          <span class="nx">subscription</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span> <span class="nx">subscription</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="p">[</span><span class="nx">copy</span><span class="p">,</span> <span class="nx">channel</span><span class="p">]</span>
+
+        <span class="k">else</span>
+          <span class="nx">subscription</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span> <span class="nx">subscription</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="p">[</span><span class="nx">data</span><span class="p">,</span> <span class="nx">channel</span><span class="p">]</span>
+    <span class="err">@</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>Install Pub/Sub functions to an object</h2>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">installTo: </span><span class="nf">(obj) -&gt;</span>
+    <span class="k">if</span> <span class="k">typeof</span> <span class="nx">obj</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+      <span class="nv">obj.subscribe   = </span><span class="nx">@subscribe</span>
+      <span class="nv">obj.unsubscribe = </span><span class="nx">@unsubscribe</span>
+      <span class="nv">obj.publish     = </span><span class="nx">@publish</span>
+      <span class="nv">obj.channels    = </span><span class="nx">@channels</span>
+    <span class="err">@</span>
+
+  <span class="vi">@rm: </span><span class="nf">(o, ch, cb) -&gt;</span>
+    <span class="nx">o</span><span class="p">.</span><span class="nx">channels</span><span class="p">[</span><span class="nx">ch</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">s</span> <span class="k">for</span> <span class="nx">s</span> <span class="k">in</span> <span class="nx">o</span><span class="p">.</span><span class="nx">channels</span><span class="p">[</span><span class="nx">ch</span><span class="p">]</span> <span class="k">when</span> <span class="p">(</span>
+      <span class="k">if</span> <span class="nx">cb</span><span class="o">?</span> <span class="k">then</span> <span class="nx">s</span><span class="p">.</span><span class="nx">callback</span> <span class="o">isnt</span> <span class="nx">cb</span> <span class="k">else</span> <span class="nx">s</span><span class="p">.</span><span class="nx">context</span> <span class="o">isnt</span> <span class="nx">o</span> <span class="p">))</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

@@ -22,13 +22,13 @@ it is comfortable to maintain and scale.
 * [i18n Plugin](tutorial/i18n.html) - a quick introduction
 * [GitHub project page](https://github.com/flosse/scaleApp)
 * [Bug tracker](https://github.com/flosse/scaleApp/issues)
-* [Source code documentation](doc/0.3/scaleApp.core.html)
+* [Source code documentation](doc/0.3.1/scaleApp.core.html)
 
 # Downloads
 
 ## Official releases
 
-The latest release is **0.3**.
+The latest release is **0.3.1**.
 
 * [scaleApp.full.js](build/scaleApp.full.js)
   ([min](build/scaleApp.full.min.js)) - scaleApp including all plugins.

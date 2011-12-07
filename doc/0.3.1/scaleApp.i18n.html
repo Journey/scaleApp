@@ -1,0 +1,52 @@
+<!DOCTYPE html>  <html> <head>   <title>scaleApp.i18n.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="scaleApp.dom.html">                 scaleApp.dom.coffee               </a>                                           <a class="source" href="scaleApp.i18n.html">                 scaleApp.i18n.coffee               </a>                                           <a class="source" href="scaleApp.mvc.html">                 scaleApp.mvc.coffee               </a>                                           <a class="source" href="scaleApp.util.html">                 scaleApp.util.coffee               </a>                                           <a class="source" href="scaleApp.Mediator.html">                 scaleApp.Mediator.coffee               </a>                                           <a class="source" href="scaleApp.Sandbox.html">                 scaleApp.Sandbox.coffee               </a>                                           <a class="source" href="scaleApp.core.html">                 scaleApp.core.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               scaleApp.i18n.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="k">class</span> <span class="nx">SBPlugin</span>
+
+  <span class="nv">constructor: </span><span class="nf">(@sb) -&gt;</span>
+
+  <span class="nv">_: </span><span class="nf">(text) -&gt;</span>
+    <span class="nv">i18n = </span><span class="nx">@sb</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">i18n</span>
+    <span class="k">return</span> <span class="nx">text</span> <span class="k">if</span> <span class="k">typeof</span> <span class="nx">i18n</span> <span class="o">isnt</span> <span class="s2">&quot;object&quot;</span>
+    <span class="nx">@sb</span><span class="p">.</span><span class="nx">core</span><span class="p">.</span><span class="nx">i18n</span><span class="p">.</span><span class="nx">get</span> <span class="nx">i18n</span><span class="p">,</span> <span class="nx">text</span>
+
+  <span class="nv">getLanguage: </span><span class="o">-&gt;</span> <span class="nx">@sb</span><span class="p">.</span><span class="nx">core</span><span class="p">.</span><span class="nx">i18n</span><span class="p">.</span><span class="nx">getLanguage</span><span class="p">()</span>
+
+  <span class="nv">onLanguageChanged: </span><span class="nf">(fn) -&gt;</span> <span class="nx">@sb</span><span class="p">.</span><span class="nx">core</span><span class="p">.</span><span class="nx">i18n</span><span class="p">.</span><span class="nx">subscribe</span> <span class="nx">fn</span>
+
+<span class="nv">baseLanguage = </span><span class="s2">&quot;en&quot;</span>
+ 
+<span class="nv">getBrowserLanguage = </span><span class="o">-&gt;</span>
+  <span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">language</span> <span class="o">or</span> <span class="nx">navigator</span><span class="p">.</span><span class="nx">browserLanguage</span> <span class="o">or</span> <span class="nx">baseLang</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+ </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>Holds the current global language code.
+By default the browsers language is used.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">lang = </span><span class="nx">getBrowserLanguage</span><span class="p">()</span>
+
+<span class="nv">mediator = </span><span class="k">new</span> <span class="nx">scaleApp</span><span class="p">.</span><span class="nx">Mediator</span>
+
+<span class="nv">channelName = </span><span class="s2">&quot;i18n&quot;</span>
+
+<span class="nv">subscribe = </span><span class="nf">(fn) -&gt;</span> <span class="nx">mediator</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span><span class="nx">fn</span><span class="p">)</span>
+
+<span class="nv">unsubscribe = </span><span class="nf">(fn) -&gt;</span> <span class="nx">mediator</span><span class="p">.</span><span class="nx">unsubscribe</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span><span class="nx">fn</span><span class="p">)</span>
+
+<span class="nv">getLanguage = </span><span class="o">-&gt;</span> <span class="nx">lang</span>
+
+<span class="nv">setLanguage = </span><span class="nf">(code) -&gt;</span>
+  <span class="k">if</span> <span class="k">typeof</span> <span class="nx">code</span> <span class="o">is</span> <span class="s2">&quot;string&quot;</span>
+    <span class="nv">lang = </span><span class="nx">code</span>
+    <span class="nx">mediator</span><span class="p">.</span><span class="nx">publish</span> <span class="nx">channelName</span><span class="p">,</span> <span class="nx">lang</span>
+
+<span class="nv">get = </span><span class="nf">(x, text) -&gt;</span>
+  <span class="nx">x</span><span class="p">[</span><span class="nx">lang</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="nx">text</span><span class="p">]</span> <span class="o">?</span> <span class="p">(</span> <span class="nx">x</span><span class="p">[</span><span class="nx">lang</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]</span><span class="o">?</span><span class="p">[</span><span class="nx">text</span><span class="p">]</span> <span class="o">?</span> <span class="p">(</span> <span class="nx">x</span><span class="p">[</span><span class="nx">baseLanguage</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="nx">text</span><span class="p">]</span> <span class="o">?</span> <span class="nx">text</span> <span class="p">)</span> <span class="p">)</span>
+
+<span class="nx">scaleApp</span><span class="p">.</span><span class="nx">registerPlugin</span>
+  <span class="nv">id: </span><span class="s2">&quot;i18n&quot;</span>
+  <span class="nv">sandbox: </span><span class="nx">SBPlugin</span>
+  <span class="nv">core:</span>
+    <span class="nv">i18n:</span>
+      <span class="nv">setLanguage: </span><span class="nx">setLanguage</span>
+      <span class="nv">getBrowserLanguage: </span><span class="nx">getBrowserLanguage</span>
+      <span class="nv">getLanguage: </span><span class="nx">getLanguage</span>
+      <span class="nv">baseLanguage: </span><span class="nx">baseLanguage</span>
+      <span class="nv">get: </span><span class="nx">get</span>
+      <span class="nv">subscribe: </span><span class="nx">subscribe</span>
+      <span class="nv">unsubscribe: </span><span class="nx">unsubscribe</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

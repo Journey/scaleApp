@@ -1,54 +1,77 @@
 (function() {
   var Mediator, Sandbox, VERSION, addModule, core, coreKeywords, createInstance, error, instances, k, mediator, modules, onInstantiate, onInstantiateFunctions, plugins, register, registerPlugin, sandboxKeywords, start, startAll, stop, stopAll, uniqueId, unregister, unregisterAll, v;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __slice = Array.prototype.slice, __indexOf = Array.prototype.indexOf || function(item) {
+  var __hasProp = Object.prototype.hasOwnProperty, __indexOf = Array.prototype.indexOf || function(item) {
     for (var i = 0, l = this.length; i < l; i++) {
       if (this[i] === item) return i;
     }
     return -1;
   };
   Mediator = (function() {
-    function Mediator(name) {
-      this.name = name != null ? name : "";
-      this.publish = __bind(this.publish, this);
-      this.unsubscribe = __bind(this.unsubscribe, this);
-      this.subscribe = __bind(this.subscribe, this);
+    function Mediator(obj) {
       this.channels = {};
+      if (obj) {
+        this.installTo(obj);
+      }
     }
-    Mediator.prototype.subscribe = function(channel, fn) {
+    Mediator.prototype.subscribe = function(channel, fn, context) {
+      var id, k, subscription, that, v, _i, _len, _results, _results2;
+      if (context == null) {
+        context = this;
+      }
       if (this.channels[channel] == null) {
         this.channels[channel] = [];
       }
-      this.channels[channel].push({
-        context: this,
-        callback: fn
-      });
-      return this;
-    };
-    Mediator.prototype.unsubscribe = function(channel, cb) {
-      var ch, k, removeCB, _ref;
-      removeCB = function(array, fn) {
-        var j, sub, _len, _results;
+      that = this;
+      if (channel instanceof Array) {
         _results = [];
-        for (j = 0, _len = array.length; j < _len; j++) {
-          sub = array[j];
-          if (sub.callback === fn) {
-            array.splice(j, 1);
-            break;
-          }
+        for (_i = 0, _len = channel.length; _i < _len; _i++) {
+          id = channel[_i];
+          _results.push(this.subscribe(id, fn));
         }
         return _results;
-      };
-      switch (typeof channel) {
+      } else if (typeof channel === "object") {
+        _results2 = [];
+        for (k in channel) {
+          v = channel[k];
+          _results2.push(this.subscribe(k, v));
+        }
+        return _results2;
+      } else {
+        subscription = {
+          context: context,
+          callback: fn
+        };
+        return {
+          attach: function() {
+            that.channels[channel].push(subscription);
+            return this;
+          },
+          detach: function() {
+            Mediator.rm(that, channel, subscription.callback);
+            return this;
+          }
+        }.attach();
+      }
+    };
+    Mediator.prototype.unsubscribe = function(ch, cb) {
+      var id;
+      switch (typeof ch) {
         case "string":
-          if (this.channels[channel] != null) {
-            removeCB(this.channels[channel], cb);
+          if (typeof cb === "function") {
+            Mediator.rm(this, ch, cb);
+          }
+          if (typeof cb === "undefined") {
+            Mediator.rm(this, ch);
           }
           break;
         case "function":
-          _ref = this.channels;
-          for (k in _ref) {
-            ch = _ref[k];
-            removeCB(ch, channel);
+          for (id in this.channels) {
+            Mediator.rm(this, id, ch);
+          }
+          break;
+        case "undefined":
+          for (id in this.channels) {
+            Mediator.rm(this, id);
           }
       }
       return this;
@@ -60,10 +83,22 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           subscription = _ref[_i];
           if (publishReference !== true && typeof data === "object") {
-            copy = {};
-            for (k in data) {
-              v = data[k];
-              copy[k] = v;
+            if (data instanceof Array) {
+              copy = (function() {
+                var _j, _len2, _results;
+                _results = [];
+                for (_j = 0, _len2 = data.length; _j < _len2; _j++) {
+                  v = data[_j];
+                  _results.push(v);
+                }
+                return _results;
+              })();
+            } else {
+              copy = {};
+              for (k in data) {
+                v = data[k];
+                copy[k] = v;
+              }
             }
             subscription.callback.apply(subscription.context, [copy, channel]);
           } else {
@@ -76,9 +111,26 @@
     Mediator.prototype.installTo = function(obj) {
       if (typeof obj === "object") {
         obj.subscribe = this.subscribe;
+        obj.unsubscribe = this.unsubscribe;
         obj.publish = this.publish;
+        obj.channels = this.channels;
       }
       return this;
+    };
+    Mediator.rm = function(o, ch, cb) {
+      var s;
+      return o.channels[ch] = (function() {
+        var _i, _len, _ref, _results;
+        _ref = o.channels[ch];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          s = _ref[_i];
+          if ((cb != null ? s.callback !== cb : s.context !== o)) {
+            _results.push(s);
+          }
+        }
+        return _results;
+      })();
     };
     return Mediator;
   })();
@@ -97,27 +149,12 @@
         throw new Error("id is not a string");
       }
     }
-    Sandbox.prototype.subscribe = function() {
-      var args, _ref;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return (_ref = this.core).subscribe.apply(_ref, __slice.call(args).concat([this.instanceId]));
-    };
-    Sandbox.prototype.unsubscribe = function() {
-      var args, _ref;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return (_ref = this.core).unsubscribe.apply(_ref, __slice.call(args).concat([this.instanceId]));
-    };
-    Sandbox.prototype.publish = function() {
-      var args, _ref;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return (_ref = this.core).publish.apply(_ref, __slice.call(args).concat([this.instanceId]));
-    };
     return Sandbox;
   })();
-  VERSION = "0.3";
+  VERSION = "0.3.1";
   modules = {};
   instances = {};
-  mediator = new Mediator("core");
+  mediator = new Mediator;
   plugins = {};
   error = function(e) {
     return typeof console !== "undefined" && console !== null ? typeof console.error === "function" ? console.error(e.message) : void 0 : void 0;
@@ -176,15 +213,15 @@
       }
     }
     sb = new Sandbox(core, instanceId, instanceOpts);
+    mediator.installTo(sb);
     for (i in plugins) {
       p = plugins[i];
       if (p.sandbox != null) {
         plugin = new p.sandbox(sb);
         for (k in plugin) {
+          if (!__hasProp.call(plugin, k)) continue;
           v = plugin[k];
-          if (plugin.hasOwnProperty(k)) {
-            sb[k] = v;
-          }
+          sb[k] = v;
         }
       }
     }
@@ -276,7 +313,7 @@
         throw new Error("second parameter has to be an object");
       }
       if (modules[moduleId] == null) {
-        throw new Error("modle does not exist");
+        throw new Error("module does not exist");
       }
       instance = createInstance(moduleId, opt.instanceId, opt.options);
       if (instance.running === true) {
@@ -302,30 +339,65 @@
       return false;
     }
   };
-  startAll = function(fn, opt) {
-    var id, l, module, _i, _len;
-    if (fn instanceof Array) {
-      l = fn.length;
-      for (_i = 0, _len = fn.length; _i < _len; _i++) {
-        id = fn[_i];
-        start(id, {
-          callback: function() {
-            return l--;
+  startAll = function(cb, opt) {
+    var id, k, mods, o, origCB, v, _ref;
+    if (cb instanceof Array) {
+      mods = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = cb.length; _i < _len; _i++) {
+          id = cb[_i];
+          if (modules[id]) {
+            _results.push(id);
           }
-        });
-      }
+        }
+        return _results;
+      })();
+      cb = opt;
     } else {
-      for (id in modules) {
-        module = modules[id];
-        if (module) {
-          start(id, module.options);
+      switch (typeof cb) {
+        case "undefined":
+        case "function":
+          mods = (function() {
+            var _results;
+            _results = [];
+            for (id in modules) {
+              _results.push(id);
+            }
+            return _results;
+          })();
+      }
+    }
+    if ((mods != null ? mods.length : void 0) >= 1) {
+      o = {};
+      _ref = modules[mods[0]].options;
+      for (k in _ref) {
+        if (!__hasProp.call(_ref, k)) continue;
+        v = _ref[k];
+        if (v) {
+          o[k] = v;
         }
       }
+      origCB = o.callback;
+      if (mods.slice(1).length === 0) {
+        o.callback = function() {
+          if (typeof origCB === "function") {
+            origCB();
+          }
+          return typeof cb === "function" ? cb() : void 0;
+        };
+      } else {
+        o.callback = function() {
+          if (typeof origCB === "function") {
+            origCB();
+          }
+          return startAll(mods.slice(1), cb);
+        };
+      }
+      return start(mods[0], o);
+    } else {
+      return false;
     }
-    if (typeof fn === "function") {
-      fn();
-    }
-    return true;
   };
   stopAll = function() {
     var id, _results;
@@ -390,13 +462,11 @@
     stop: stop,
     startAll: startAll,
     stopAll: stopAll,
-    publish: mediator.publish,
-    subscribe: mediator.subscribe,
-    unsubscribe: mediator.unsubscribe,
     uniqueId: uniqueId,
     Mediator: Mediator,
     Sandbox: Sandbox
   };
+  mediator.installTo(core);
   if (typeof exports !== "undefined" && exports !== null) {
     for (k in core) {
       v = core[k];
