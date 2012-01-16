@@ -22,13 +22,15 @@ it is comfortable to maintain and scale.
 * [i18n Plugin](tutorial/i18n.html) - a quick introduction
 * [GitHub project page](https://github.com/flosse/scaleApp)
 * [Bug tracker](https://github.com/flosse/scaleApp/issues)
-* [Source code documentation](doc/0.3.1/scaleApp.core.html)
+* [Source code documentation](doc/0.3.2/scaleApp.core.html)
 
 # Downloads
 
 ## Official releases
 
-The latest release is **0.3.1**.
+The latest release is **0.3.2**
+(source: [tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.2)|
+[zip](https://github.com/flosse/scaleApp/zipball/v0.3.2))
 
 * [scaleApp.full.js](build/scaleApp.full.js)
   ([min](build/scaleApp.full.min.js)) - scaleApp including all plugins.
@@ -46,7 +48,8 @@ The latest release is **0.3.1**.
 * [scaleApp.dom.js](build/plugins/scaleApp.dom.js)
   ([min](build/plugins/scaleApp.dom.min.js)) - basic DOM manipulation (currently only used for `getContainer()`)
 
-Older releases can be found on the [project downloads page](https://github.com/flosse/scaleApp/downloads).
+Older releases can be found on the
+[project downloads page](https://github.com/flosse/scaleApp/tags).
 
 ## Development Version
 
@@ -73,7 +76,8 @@ Also have a look at the [source code](http://github.com/flosse/FAST).
 
 # Architecture
 
-scaleApp is inspired by the talk of Nicholas C. Zakas - ["Scalable JavaScript Application Architecture"](http://developer.yahoo.com/yui/theater/video.php?v=zakas-architecture).
+scaleApp is inspired by the talk of Nicholas C. Zakas -
+["Scalable JavaScript Application Architecture"](http://developer.yahoo.com/yui/theater/video.php?v=zakas-architecture).
 Unlike his recommendations to abstract DOM manipulations and separating the
 framework from the base library, scaleApp does not implement any DOM methods.
 Just use one of your favorite libs (e.g. jQuery) as base library.

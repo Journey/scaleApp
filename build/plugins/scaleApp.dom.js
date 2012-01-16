@@ -1,6 +1,6 @@
 (function() {
-  var DOMPlugin;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var DOMPlugin,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   DOMPlugin = (function() {
 

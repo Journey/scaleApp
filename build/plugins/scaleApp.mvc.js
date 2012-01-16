@@ -1,12 +1,11 @@
 (function() {
-  var Controller, Model, View;
-  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; }, __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (__hasProp.call(this, i) && this[i] === item) return i; } return -1; };
+  var Controller, Model, View,
+    __hasProp = Object.prototype.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  Model = (function() {
+  Model = (function(_super) {
 
-    __extends(Model, scaleApp.Mediator);
-
-    Model.reservedKeywords = ["set", "get"];
+    __extends(Model, _super);
 
     function Model(obj) {
       var k, v;
@@ -18,24 +17,53 @@
       }
     }
 
-    Model.prototype.set = function(key, val) {
-      var k, v, _results;
-      if (typeof key === "object") {
-        _results = [];
-        for (k in key) {
-          v = key[k];
-          _results.push(this.set(k, v));
-        }
-        return _results;
-      } else {
-        if (!(__indexOf.call(Model.reservedKeywords, key) >= 0)) {
-          if (this[key] !== val) {
-            this[key] = val;
-            this.publish("changed");
+    Model.prototype.set = function(key, val, silent) {
+      var k, v;
+      if (silent == null) silent = false;
+      switch (typeof key) {
+        case "object":
+          for (k in key) {
+            v = key[k];
+            this.set(k, v, true);
           }
-        }
-        return this;
+          if (!silent) {
+            this.publish(Model.CHANGED, (function() {
+              var _results;
+              _results = [];
+              for (k in key) {
+                v = key[k];
+                _results.push(k);
+              }
+              return _results;
+            })());
+          }
+          break;
+        case "string":
+          if (!(key === "set" || key === "get") && this[key] !== val) {
+            this[key] = val;
+            if (!silent) this.publish(Model.CHANGED, [key]);
+          }
+          break;
+        default:
+          if (typeof console !== "undefined" && console !== null) {
+            if (typeof console.error === "function") {
+              console.error("key is not a string");
+            }
+          }
       }
+      return this;
+    };
+
+    Model.prototype.change = function(cb, context) {
+      if (typeof cb === "function") {
+        return this.subscribe(Model.CHANGED, cb, context);
+      } else {
+        return this.publish(Model.CHANGED);
+      }
+    };
+
+    Model.prototype.notify = function() {
+      return this.change();
     };
 
     Model.prototype.get = function(key) {
@@ -46,15 +74,18 @@
       var json, k, v;
       json = {};
       for (k in this) {
+        if (!__hasProp.call(this, k)) continue;
         v = this[k];
-        if (this.hasOwnProperty(k)) json[k] = v;
+        json[k] = v;
       }
       return json;
     };
 
+    Model.CHANGED = "changed";
+
     return Model;
 
-  })();
+  })(scaleApp.Mediator);
 
   View = (function() {
 
@@ -63,11 +94,8 @@
     }
 
     View.prototype.setModel = function(model) {
-      var _this = this;
       this.model = model;
-      return this.model.subscribe("changed", function() {
-        return _this.render();
-      });
+      return this.model.change(this.render, this);
     };
 
     View.prototype.render = function() {};

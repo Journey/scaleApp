@@ -1,0 +1,181 @@
+<!DOCTYPE html>  <html> <head>   <title>scaleApp.core.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="scaleApp.collection.html">                 scaleApp.collection.coffee               </a>                                           <a class="source" href="scaleApp.dom.html">                 scaleApp.dom.coffee               </a>                                           <a class="source" href="scaleApp.i18n.html">                 scaleApp.i18n.coffee               </a>                                           <a class="source" href="scaleApp.mvc.html">                 scaleApp.mvc.coffee               </a>                                           <a class="source" href="scaleApp.submodule.html">                 scaleApp.submodule.coffee               </a>                                           <a class="source" href="scaleApp.util.html">                 scaleApp.util.coffee               </a>                                           <a class="source" href="scaleApp.Mediator.html">                 scaleApp.Mediator.coffee               </a>                                           <a class="source" href="scaleApp.Sandbox.html">                 scaleApp.Sandbox.coffee               </a>                                           <a class="source" href="scaleApp.core.html">                 scaleApp.core.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               scaleApp.core.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">VERSION = </span><span class="s2">&quot;0.3.2&quot;</span>
+
+<span class="nv">modules = </span><span class="p">{}</span>
+<span class="nv">instances = </span><span class="p">{}</span>
+<span class="nv">mediator = </span><span class="k">new</span> <span class="nx">Mediator</span>
+<span class="nv">plugins = </span><span class="p">{}</span>
+<span class="nv">error = </span><span class="nf">(e) -&gt;</span> <span class="nx">console</span><span class="o">?</span><span class="p">.</span><span class="nx">error</span><span class="o">?</span> <span class="nx">e</span><span class="p">.</span><span class="nx">message</span>
+
+<span class="nv">uniqueId = </span><span class="nf">(length=8) -&gt;</span>
+ <span class="nv">id = </span><span class="s2">&quot;&quot;</span>
+ <span class="nx">id</span> <span class="o">+=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">random</span><span class="p">().</span><span class="nx">toString</span><span class="p">(</span><span class="mi">36</span><span class="p">).</span><span class="nx">substr</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">while</span> <span class="nx">id</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="nx">length</span>
+ <span class="nx">id</span><span class="p">.</span><span class="nx">substr</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">length</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>container for all functions that gets called when an instance gets created</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">onInstantiateFunctions = _always: </span><span class="p">[]</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>registers a function that gets executed when a module gets instantiated.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">onInstantiate = </span><span class="nf">(fn, moduleId) -&gt;</span>
+
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;expect a function as parameter&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">fn</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+  <span class="nv">entry = </span><span class="p">{</span> <span class="nv">context: </span><span class="err">@</span><span class="p">,</span> <span class="nv">callback: </span><span class="nx">fn</span> <span class="p">}</span>
+
+  <span class="k">if</span> <span class="k">typeof</span> <span class="nx">moduleId</span> <span class="o">is</span> <span class="s2">&quot;string&quot;</span>
+    <span class="nx">onInstantiateFunctions</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="nx">unless</span> <span class="nx">onInstantiateFunctions</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span><span class="o">?</span>
+    <span class="nx">onInstantiateFunctions</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">].</span><span class="nx">push</span> <span class="nx">entry</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="o">not</span> <span class="nx">moduleId</span><span class="o">?</span>
+    <span class="nx">onInstantiateFunctions</span><span class="p">.</span><span class="nx">_always</span><span class="p">.</span><span class="nx">push</span> <span class="nx">entry</span>
+
+<span class="nv">createInstance = </span><span class="nf">(moduleId, instanceId=moduleId, opt) -&gt;</span>
+
+  <span class="nv">module = </span><span class="nx">modules</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span>
+
+  <span class="k">return</span> <span class="nx">instances</span><span class="p">[</span><span class="nx">instanceId</span><span class="p">]</span> <span class="k">if</span> <span class="nx">instances</span><span class="p">[</span><span class="nx">instanceId</span><span class="p">]</span><span class="o">?</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>Merge default options and instance options,
+without modifying the defaults.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">instanceOpts = </span><span class="p">{}</span>
+  <span class="nx">instanceOpts</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">val</span> <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">module</span><span class="p">.</span><span class="nx">options</span>
+  <span class="nx">instanceOpts</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">val</span> <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">opt</span> <span class="k">if</span> <span class="nx">opt</span>
+
+  <span class="nv">sb = </span><span class="k">new</span> <span class="nx">Sandbox</span> <span class="nx">core</span><span class="p">,</span> <span class="nx">instanceId</span><span class="p">,</span> <span class="nx">instanceOpts</span>
+  <span class="nx">mediator</span><span class="p">.</span><span class="nx">installTo</span> <span class="nx">sb</span>
+
+  <span class="k">for</span> <span class="nx">i</span><span class="p">,</span><span class="nx">p</span> <span class="k">of</span> <span class="nx">plugins</span> <span class="k">when</span> <span class="nx">p</span><span class="p">.</span><span class="nx">sandbox</span><span class="o">?</span>
+    <span class="nv">plugin = </span><span class="k">new</span> <span class="nx">p</span><span class="p">.</span><span class="nx">sandbox</span> <span class="nx">sb</span>
+    <span class="nx">sb</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">own</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">of</span> <span class="nx">plugin</span>
+
+  <span class="nv">instance = </span><span class="k">new</span> <span class="nx">module</span><span class="p">.</span><span class="nx">creator</span> <span class="nx">sb</span>
+  <span class="nv">instance.options = </span><span class="nx">instanceOpts</span>
+  <span class="nv">instance.id = </span><span class="nx">instanceId</span>
+  <span class="nx">instances</span><span class="p">[</span><span class="nx">instanceId</span><span class="p">]</span> <span class="o">=</span> <span class="nx">instance</span>
+
+  <span class="k">for</span> <span class="nx">n</span> <span class="k">in</span> <span class="p">[</span><span class="nx">instanceId</span><span class="p">,</span> <span class="s1">&#39;_always&#39;</span><span class="p">]</span>
+    <span class="nx">entry</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">context</span> <span class="k">for</span> <span class="nx">entry</span> <span class="k">in</span> <span class="nx">onInstantiateFunctions</span><span class="p">[</span><span class="nx">n</span><span class="p">]</span> <span class="k">if</span> <span class="nx">onInstantiateFunctions</span><span class="p">[</span><span class="nx">n</span><span class="p">]</span><span class="o">?</span>
+
+  <span class="nx">instance</span>
+
+<span class="nv">addModule = </span><span class="nf">(moduleId, creator, opt) -&gt;</span>
+
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;moudule ID has to be a string&quot;</span>            <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">moduleId</span>  <span class="o">is</span> <span class="s2">&quot;string&quot;</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;creator has to be a constructor function&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">creator</span>   <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;option parameter has to be an object&quot;</span>     <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">opt</span>       <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+
+  <span class="nv">modObj = </span><span class="k">new</span> <span class="nx">creator</span><span class="p">()</span>
+
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;creator has to return an object&quot;</span>          <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">modObj</span>          <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module has to have an init function&quot;</span>      <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">modObj</span><span class="p">.</span><span class="nx">init</span>     <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module has to have a destroy function&quot;</span>    <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">modObj</span><span class="p">.</span><span class="nx">destroy</span>  <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module #{moduleId} was already registered&quot;</span> <span class="k">if</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span><span class="o">?</span>
+
+  <span class="nx">modules</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span> <span class="o">=</span>
+    <span class="nv">creator: </span><span class="nx">creator</span>
+    <span class="nv">options: </span><span class="nx">opt</span>
+    <span class="nv">id: </span><span class="nx">moduleId</span>
+  <span class="kc">true</span>
+
+<span class="nv">register = </span><span class="nf">(moduleId, creator, opt = {}) -&gt;</span>
+
+  <span class="k">try</span>
+    <span class="nx">addModule</span> <span class="nx">moduleId</span><span class="p">,</span> <span class="nx">creator</span><span class="p">,</span> <span class="nx">opt</span>
+  <span class="k">catch</span> <span class="nx">e</span>
+    <span class="nx">error</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;could not register module: #{e.message}&quot;</span>
+    <span class="kc">false</span>
+
+<span class="nv">unregister = </span><span class="nf">(id) -&gt;</span>
+  <span class="k">if</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span><span class="o">?</span>
+    <span class="k">delete</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="kc">true</span>
+  <span class="k">else</span>
+    <span class="kc">false</span>
+
+<span class="nv">unregisterAll = </span><span class="o">-&gt;</span> <span class="nx">unregister</span> <span class="nx">id</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">modules</span>
+
+<span class="nv">start = </span><span class="nf">(moduleId, opt={}) -&gt;</span>
+
+  <span class="k">try</span>
+
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module ID has to be a string&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">moduleId</span> <span class="o">is</span> <span class="s2">&quot;string&quot;</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;second parameter has to be an object&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">opt</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module does not exist&quot;</span> <span class="nx">unless</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">moduleId</span><span class="p">]</span><span class="o">?</span>
+
+    <span class="nv">instance = </span><span class="nx">createInstance</span> <span class="nx">moduleId</span><span class="p">,</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">instanceId</span><span class="p">,</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">options</span>
+
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;module was already started&quot;</span> <span class="k">if</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">running</span> <span class="o">is</span> <span class="kc">true</span>
+
+    <span class="nx">instance</span><span class="p">.</span><span class="nx">init</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">options</span>
+    <span class="nv">instance.running = </span><span class="kc">true</span>
+    <span class="nx">opt</span><span class="p">.</span><span class="nx">callback</span><span class="o">?</span><span class="p">()</span>
+    <span class="kc">true</span>
+
+  <span class="k">catch</span> <span class="nx">e</span>
+    <span class="nx">error</span> <span class="nx">e</span>
+    <span class="kc">false</span>
+
+<span class="nv">stop = </span><span class="nf">(id) -&gt;</span>
+  <span class="k">if</span> <span class="nv">instance = </span><span class="nx">instances</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span> <span class="k">then</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">destroy</span><span class="p">();</span> <span class="k">delete</span> <span class="nx">instances</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+  <span class="k">else</span> <span class="kc">false</span>
+
+<span class="nv">startAll = </span><span class="nf">(cb, opt) -&gt;</span>
+
+  <span class="k">if</span> <span class="nx">cb</span> <span class="k">instanceof</span> <span class="nb">Array</span>
+    <span class="nv">mods = </span><span class="p">(</span><span class="nx">id</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">in</span> <span class="nx">cb</span> <span class="k">when</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">id</span><span class="p">])</span>
+    <span class="nv">cb = </span><span class="nx">opt</span>
+  <span class="k">else</span> <span class="k">switch</span> <span class="k">typeof</span> <span class="nx">cb</span>
+    <span class="k">when</span> <span class="s2">&quot;undefined&quot;</span><span class="p">,</span><span class="s2">&quot;function&quot;</span> <span class="k">then</span> <span class="nv">mods = </span><span class="p">(</span><span class="nx">id</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">modules</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nx">mods</span><span class="o">?</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+    <span class="nv">o = </span><span class="p">{};</span> <span class="nx">o</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">own</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">of</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">mods</span><span class="p">[</span><span class="mi">0</span><span class="p">]].</span><span class="nx">options</span> <span class="k">when</span> <span class="nx">v</span>
+    <span class="nv">origCB = </span><span class="nx">o</span><span class="p">.</span><span class="nx">callback</span>
+
+    <span class="k">if</span> <span class="nx">mods</span><span class="p">[</span><span class="mi">1</span><span class="p">..].</span><span class="nx">length</span> <span class="o">is</span> <span class="mi">0</span>
+      <span class="nv">o.callback = </span><span class="o">-&gt;</span> <span class="nx">origCB</span><span class="o">?</span><span class="p">();</span> <span class="nx">cb</span><span class="o">?</span><span class="p">()</span>
+    <span class="k">else</span>
+      <span class="nv">o.callback = </span><span class="o">-&gt;</span> <span class="nx">origCB</span><span class="o">?</span><span class="p">();</span> <span class="nx">startAll</span> <span class="nx">mods</span><span class="p">[</span><span class="mi">1</span><span class="p">..],</span> <span class="nx">cb</span>
+    <span class="nx">start</span> <span class="nx">mods</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">o</span>
+  <span class="k">else</span> <span class="kc">false</span>
+
+<span class="nv">stopAll = </span><span class="o">-&gt;</span> <span class="nx">stop</span> <span class="nx">id</span> <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">instances</span>
+
+<span class="nv">coreKeywords = </span><span class="p">[</span> <span class="s2">&quot;VERSION&quot;</span><span class="p">,</span> <span class="s2">&quot;register&quot;</span><span class="p">,</span> <span class="s2">&quot;unregister&quot;</span><span class="p">,</span> <span class="s2">&quot;registerPlugin&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span>
+  <span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="s2">&quot;startAll&quot;</span><span class="p">,</span> <span class="s2">&quot;stopAll&quot;</span><span class="p">,</span> <span class="s2">&quot;publish&quot;</span><span class="p">,</span> <span class="s2">&quot;subscribe&quot;</span><span class="p">,</span> <span class="s2">&quot;unsubscribe&quot;</span>
+  <span class="s2">&quot;Mediator&quot;</span><span class="p">,</span> <span class="s2">&quot;Sandbox&quot;</span><span class="p">,</span> <span class="s2">&quot;unregisterAll&quot;</span><span class="p">,</span> <span class="s2">&quot;uniqueId&quot;</span> <span class="p">]</span>
+
+<span class="nv">sandboxKeywords = </span><span class="p">[</span> <span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="s2">&quot;instanceId&quot;</span><span class="p">,</span> <span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="s2">&quot;publish&quot;</span>
+  <span class="s2">&quot;subscribe&quot;</span><span class="p">,</span> <span class="s2">&quot;unsubscribe&quot;</span> <span class="p">]</span>
+
+<span class="nv">registerPlugin = </span><span class="nf">(plugin) -&gt;</span>
+
+  <span class="k">try</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;plugin has to be an object&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">plugin</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;plugin has no id&quot;</span> <span class="nx">unless</span> <span class="k">typeof</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">id</span> <span class="o">is</span> <span class="s2">&quot;string&quot;</span>
+
+    <span class="k">if</span> <span class="k">typeof</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">sandbox</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+      <span class="k">for</span> <span class="nx">k</span> <span class="k">of</span> <span class="k">new</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">sandbox</span> <span class="k">new</span> <span class="nx">Sandbox</span> <span class="nx">core</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;plugin uses reserved keyword&quot;</span> <span class="k">if</span> <span class="nx">k</span> <span class="k">in</span> <span class="nx">sandboxKeywords</span>
+      <span class="nx">Sandbox</span><span class="o">::</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="k">of</span> <span class="nv">plugin.sandbox::</span>
+
+    <span class="k">if</span> <span class="k">typeof</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">core</span> <span class="o">is</span> <span class="s2">&quot;object&quot;</span>
+      <span class="k">for</span> <span class="nx">k</span> <span class="k">of</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">core</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;plugin uses reserved keyword&quot;</span> <span class="k">if</span> <span class="nx">k</span> <span class="k">in</span> <span class="nx">coreKeywords</span>
+      <span class="nx">core</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="k">of</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">core</span>
+
+    <span class="k">if</span> <span class="k">typeof</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">onInstantiate</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span>
+      <span class="nx">onInstantiate</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">onInstantiate</span>
+
+    <span class="nx">plugins</span><span class="p">[</span><span class="nx">plugin</span><span class="p">.</span><span class="nx">id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">plugin</span>
+    <span class="kc">true</span>
+
+  <span class="k">catch</span> <span class="nx">e</span>
+    <span class="nx">error</span> <span class="nx">e</span>
+    <span class="kc">false</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>define pupblic API</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">core =</span>
+  <span class="nv">VERSION: </span><span class="nx">VERSION</span>
+  <span class="nv">register: </span><span class="nx">register</span>
+  <span class="nv">unregister: </span><span class="nx">unregister</span>
+  <span class="nv">unregisterAll: </span><span class="nx">unregisterAll</span>
+  <span class="nv">registerPlugin: </span><span class="nx">registerPlugin</span>
+  <span class="nv">start: </span><span class="nx">start</span>
+  <span class="nv">stop: </span><span class="nx">stop</span>
+  <span class="nv">startAll: </span><span class="nx">startAll</span>
+  <span class="nv">stopAll: </span><span class="nx">stopAll</span>
+  <span class="nv">uniqueId: </span><span class="nx">uniqueId</span>
+  <span class="nv">Mediator: </span><span class="nx">Mediator</span>
+  <span class="nv">Sandbox: </span><span class="nx">Sandbox</span>
+
+<span class="nx">mediator</span><span class="p">.</span><span class="nx">installTo</span> <span class="nx">core</span>
+<span class="nx">exports</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span><span class="o">=</span> <span class="nx">v</span> <span class="k">for</span> <span class="nx">k</span><span class="p">,</span><span class="nx">v</span> <span class="k">of</span> <span class="nx">core</span> <span class="k">if</span> <span class="nx">exports</span><span class="o">?</span>
+<span class="nb">window</span><span class="p">.</span><span class="nv">scaleApp = </span><span class="nx">core</span> <span class="k">if</span> <span class="nb">window</span><span class="o">?</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

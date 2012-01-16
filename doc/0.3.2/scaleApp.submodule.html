@@ -1,0 +1,46 @@
+<!DOCTYPE html>  <html> <head>   <title>scaleApp.submodule.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="scaleApp.collection.html">                 scaleApp.collection.coffee               </a>                                           <a class="source" href="scaleApp.dom.html">                 scaleApp.dom.coffee               </a>                                           <a class="source" href="scaleApp.i18n.html">                 scaleApp.i18n.coffee               </a>                                           <a class="source" href="scaleApp.mvc.html">                 scaleApp.mvc.coffee               </a>                                           <a class="source" href="scaleApp.submodule.html">                 scaleApp.submodule.coffee               </a>                                           <a class="source" href="scaleApp.util.html">                 scaleApp.util.coffee               </a>                                           <a class="source" href="scaleApp.Mediator.html">                 scaleApp.Mediator.coffee               </a>                                           <a class="source" href="scaleApp.Sandbox.html">                 scaleApp.Sandbox.coffee               </a>                                           <a class="source" href="scaleApp.core.html">                 scaleApp.core.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               scaleApp.submodule.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h1>container for lists of submodules</h1>
+
+<p>subInstances = {}</p>
+
+<h2>Start a submodule</h2>
+
+<p>Parameters:</p>
+
+<ul>
+<li>(String) moduleId       - The module ID</li>
+<li>(String) subInstanceId  - The subinstance ID</li>
+<li>(Object) opt            - The option object</li>
+<li>(Function) fn           - Callback function
+startSubModule: (moduleId, subInstanceId, opt, fn) =>
+@core.startSubModule moduleId, subInstanceId, opt, @instanceId, fn</li>
+</ul>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>Stop a submodule.</h2>
+
+<p>Parameters:</p>
+
+<p>(String) instanceId - The instance ID
+ stopSubModule: (instanceId) => @core.stop instanceId</p>
+
+<h1>PrivateFunction: startSubModule</h1>
+
+<p>#</p>
+
+<h1>Parameters:</h1>
+
+<h1>(String) moduleId</h1>
+
+<h1>(String) parentInstanceId</h1>
+
+<h1>(String) instanceId</h1>
+
+<h1>(Object) opt</h1>
+
+<h1>(Function) callback</h1>
+
+<p>startSubModule = (moduleId, instanceId, opt, parentInstanceId, callback) -></p>
+
+<p>p = getSuitedParamaters(moduleId, instanceId, opt)</p>
+
+<p>if start(p.moduleId, p.instanceId, p["opt"], callback) and typeof parentInstanceId is "string"
+   sub = subInstances[parentInstanceId]
+   sub = []  unless sub
+   sub.push p.instanceId</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
