@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>scaleApp</title>
+    <link type="text/css" rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans&subset=latin">
+    <link type="text/css" rel="stylesheet" href="css/reset.css">
+    <link type="text/css" rel="stylesheet" href="css/docs.css">
+    <link type="text/css" rel="stylesheet" href="css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/dark.min.css">
+    
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
+    
+    <script type="text/javascript" src="js/viewer.js"></script>
+</head>
+<body>
+    <div id="page">
+        <a name="top" />
+        
+            <header id="header">
+                <h1><a href="">scaleApp</a></h1>
+            </header>
+        
+        <div id='content'><a name="what-is-scaleapp"></a><h1>What is scaleApp?</h1>
+<p>scaleApp is a tiny JavaScript framework for scalable One-Page-Applications.
+The framework allows you to easily create complex web applications.
+
+</p>
+<p><a href="http://travis-ci.org/flosse/scaleApp"><img src="https://secure.travis-ci.org/flosse/scaleApp.png" alt="Build Status"></a>
+
+</p>
+<a name="quick-start"></a><h1>Quick Start</h1>
+<p>Link <code>scaleApp.min.js</code> in your HTML file:
+
+</p>
+<pre><code>&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;</code></pre>
+<p>If you&#39;re going to use it with node:
+
+</p>
+<pre><code>sudo npm -g install scaleapp</code></pre>
+<a name="register-modules"></a><h2>Register modules</h2>
+<p>Now you can register your modules:
+
+</p>
+<pre><code>scaleApp.register( &quot;myModuleId&quot;, function( sb ){
+  return {
+    init:    function(){ /*...*/ },
+    destroy: function(){ /*...*/ }
+  };
+});</code></pre>
+<p>As you can see the module is a function that takes the sandbox as a parameter
+and returns an object that has two functions <code>init</code> and <code>destroy</code>.
+Of course your module can be any usual class with those two functions.
+Here an coffee-script example:
+
+</p>
+<pre><code>class MyGreatModule
+
+  constructor: (@sb) -&gt;
+  init: -&gt; alert &quot;Hello world!&quot;
+  destroy: -&gt; alert &quot;Bye bye!&quot;
+
+scaleApp.register &quot;myGreatModule&quot;, MyGreatModule</code></pre>
+<p>The <code>init</code> function is called by the framework when the module is supposed to
+start. The <code>destroy</code> function is called when the module has to shut down.
+
+</p>
+<p>Of course you can also unregister a module:
+
+</p>
+<pre><code>scaleApp.register(&quot;myGreatModule&quot;);</code></pre>
+<a name="start-modules"></a><h2>Start modules</h2>
+<p>After your modules are registered, start your modules:
+
+</p>
+<pre><code>scaleApp.start( &quot;myModuleId&quot; );
+scaleApp.start( &quot;anOtherModule&quot; );</code></pre>
+<a name="start-options"></a><h3>Start options</h3>
+<p>You may also want to start several instances of a module:
+
+</p>
+<pre><code>scaleApp.start( &quot;myModuleId&quot;, {instanceId: &quot;myInstanceId&quot; } );
+scaleApp.start( &quot;myModuleId&quot;, {instanceId: &quot;anOtherInstanceId&quot; });</code></pre>
+<p>If you pass a callback function it will be called after the module started:
+
+</p>
+<pre><code>scaleApp.start( &quot;myModuleId&quot;, {callback: function(){ /*...*/ } );</code></pre>
+<p>All other options you pass are available through the sandbox:
+
+</p>
+<pre><code>scaleApp.register( &quot;mod&quot;, function(s){
+  sb = s
+  return {
+    init:    function(){ alert( sb.options.myProperty ); },
+    destroy: function(){ /*...*/ }
+  };
+});
+
+scaleApp.start(&quot;mod&quot;, {myProperty: &quot;myValue&quot;});</code></pre>
+<p>If all your modules just needs to be instanciated once, you can simply starting
+them all:
+
+</p>
+<pre><code>scaleApp.startAll();</code></pre>
+<p>To start some special modules at once you can pass an array with the module
+names:
+
+</p>
+<pre><code>scaleApp.startAll([&quot;moduleA&quot;,&quot;moduleB&quot;]);</code></pre>
+<p>You can also pass a callback function:
+
+</p>
+<pre><code>scaleApp.startAll(function(){
+  // do something when all modules were initialized
+});</code></pre>
+<a name="stopping"></a><h2>Stopping</h2>
+<p>It&#39;s obvious:
+
+</p>
+<pre><code>scaleApp.stop(&quot;moduleB&quot;);
+scaleApp.stopAll();</code></pre>
+<a name="publish-subscribe"></a><h2>Publish/Subscribe</h2>
+<p>If the module needs to communicate with others, you can use the <code>publish</code> and
+<code>subscribe</code> methods.
+
+</p>
+<a name="publish"></a><h3>Publish</h3>
+<p>The <code>publish</code> function takes three parameters whereas the last one is optional:
+- <code>topic</code> : the channel name you want to publish to
+- <code>data</code>  : the data itself
+- <code>publishReference</code> : If the data should be passed as a reference to the other
+modules this parameter has to be set to <code>true</code>.
+By default the data object gets copied so that other modules can&#39;t influence the
+original object.
+
+</p>
+<p>The publish function is accessible through the sandbox:
+
+</p>
+<pre><code>sb.publish( &quot;myEventTopic&quot;, myData );</code></pre>
+<a name="subscribe"></a><h3>Subscribe</h3>
+<p>A message handler could look like this:
+
+</p>
+<pre><code>var messageHandler = function( data, topic ){
+    switch( topic ){
+      case &quot;somethingHappend&quot;:
+        sb.publish( &quot;myEventTopic&quot;, processData(data) );
+        break;
+      case &quot;aNiceTopic&quot;:
+        justProcess( data );
+    break;
+    }
+};</code></pre>
+<p>... and it can listen to one or more channels:
+
+</p>
+<pre><code>sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
+sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
+<a name="multi-language-uis"></a><h2>Multi language UIs</h2>
+<p>Link <code>scaleApp.i18n.min.js</code> in your HTML file:
+
+</p>
+<pre><code>&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;scaleApp.i18n.min.js&quot;&gt;&lt;/script&gt;</code></pre>
+<p>If your application has to support multiple languages, you can pass an objects
+containing the localized strings with the options object.
+
+</p>
+<pre><code>var myLocalization =
+{
+  en: { welcome: &quot;Welcome&quot;, ... },
+  de: { welcome: &quot;Willkommen&quot;, ... },
+  ...
+}
+...
+scaleApp.register( &quot;moduleId&quot;, myModule, { i18n: myLocalization } );</code></pre>
+<p>Now you can access these strings easily trough the sandbox using the <code>_</code> method.
+Depending on which language is set globally it returns the corresponding
+localized string.
+
+</p>
+<pre><code>sb._(&quot;myStringId&quot;);</code></pre>
+<p>You can set the language globally by using the <code>setLanguage</code> method:
+
+</p>
+<pre><code>scaleApp.i18n.setLanguage( &quot;de&quot; );</code></pre>
+<a name="plugins"></a><h1>Plugins</h1>
+<ul>
+<li>mvc - very simple MVC classes</li>
+<li>dom - basic DOM manipulations (currently only used for <code>getContainer</code>)</li>
+<li>util - some helper functions</li>
+<li>i18n - multi language UIs</li>
+</ul>
+<a name="features"></a><h1>Features</h1>
+<ul>
+<li>loose coupling of modules</li>
+<li>small &amp; simple</li>
+<li>no serverside dependencies</li>
+<li>modules can be tested separately</li>
+<li>replacing any module without affecting other modules</li>
+<li>extendable with plugins</li>
+<li>browser and node.js support</li>
+</ul>
+<a name="architecture"></a><h1>Architecture</h1>
+<p>scaleApp is inspired by the talk of Nicholas C. Zakas -
+<a href="http://developer.yahoo.com/yui/theater/video.php?v=zakas-architecture">&quot;Scalable JavaScript Application Architecture&quot;</a>.
+Unlike his recommendations to abstract DOM manipulations and separating the
+framework from the base library, scaleApp does not implement any DOM methods.
+Just use one of your favorite libs (e.g. jQuery) as base library.
+
+</p>
+<a name="build"></a><h1>Build</h1>
+<pre><code class="shell">cake build</code></pre>
+<p>if you want all plugins included
+
+</p>
+<pre><code class="shell">cake build:full</code></pre>
+<a name="testing"></a><h1>Testing</h1>
+<p><a href="https://github.com/mhevery/jasmine-node">jasmine-node</a>
+is required (<code>npm install -g jasmine-node</code>) for running the tests.
+
+</p>
+<pre><code class="shell">cake test</code></pre>
+<a name="demo"></a><h1>Demo</h1>
+<p><strong>WARNING</strong>: the demo is out of date
+
+</p>
+<p>You can try out the <a href="http://www.scaleapp.org/demo/fast/">sample application</a>
+that is build on <a href="http://www.scaleapp.org">scaleApp</a>.
+Also have a look at the <a href="http://github.com/flosse/FAST">source code</a>.
+
+</p>
+<a name="licence"></a><h1>Licence</h1>
+<p>scaleApp is licensed under the MIT license.
+For more information have a look at
+<a href="https://github.com/flosse/scaleApp/raw/master/LICENSE.txt">LICENCE.txt</a>.
+</p>
+
+</div>
+        <footer id="footer">
+            Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
+            <a href="#top">Back to top</a> - <a href="all.html">Everything on a single page</a>
+            - <a href="?print=1">Print current page</a> - <a href="all.html?print=1">Print all pages</a>
+            
+                <a href="https://github.com/https://github.com/flosse/scaleApp" id="fork-me-on-github">Fork me on Github</a>
+            
+        </footer>
+    </div>
+</body>
+</html>
