@@ -212,10 +212,17 @@ localized string.
 </ul>
 <a name="architecture"></a><h1>Architecture</h1>
 <p>scaleApp is inspired by the talk of Nicholas C. Zakas -
-<a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>.
-Unlike his recommendations to abstract DOM manipulations and separating the
+<a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>
+(<a href="http://www.slideshare.net/nzakas/scalable-javascript-application-architecture">Slides</a>).
+There also is a little <a href="http://www.ubelly.com/2011/11/scalablejs/">Article</a> that
+describes the basic ideas.
+
+</p>
+<p>Unlike his recommendations to abstract DOM manipulations and separating the
 framework from the base library, scaleApp does not implement any DOM methods.
 Just use one of your favorite libs (e.g. jQuery) as base library.
+Of course you can also implement all your needed DOM methods into the DOM plugin
+(<code>scaleApp.dom.coffee</code>) for a more clean and scaleable architecture.
 
 </p>
 <a name="build"></a><h1>Build</h1>
