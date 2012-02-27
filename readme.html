@@ -133,6 +133,10 @@ The framework allows you to easily create complex web applications.
 <p><a href="http://travis-ci.org/flosse/scaleApp"><img src="https://secure.travis-ci.org/flosse/scaleApp.png" alt="Build Status"></a>
 
 </p>
+<p>scaleApp is inspired by the talk of Nicholas C. Zakas -
+<a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>.
+
+</p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
 <ul>
 <li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.3">scaleApp 0.3.3.tar.gz</a></li>
@@ -142,16 +146,14 @@ The framework allows you to easily create complex web applications.
 <p>Link <code>scaleApp.min.js</code> in your HTML file:
 
 </p>
-<pre><code>&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;</code></pre>
+<pre><code class="html">&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;</code></pre>
 <p>If you&#39;re going to use it with node:
 
 </p>
-<pre><code>sudo npm -g install scaleapp</code></pre>
+<pre><code class="shell">sudo npm -g install scaleapp</code></pre>
+<pre><code class="javascript">var sa = require(&quot;scaleapp&quot;).scaleApp</code></pre>
 <a name="register-modules"></a><h2>Register modules</h2>
-<p>Now you can register your modules:
-
-</p>
-<pre><code>scaleApp.register( &quot;myModuleId&quot;, function( sb ){
+<pre><code class="javascript">scaleApp.register( &quot;myModuleId&quot;, function( sb ){
   return {
     init:    function(){ /*...*/ },
     destroy: function(){ /*...*/ }
@@ -163,7 +165,7 @@ Of course your module can be any usual class with those two functions.
 Here an coffee-script example:
 
 </p>
-<pre><code>class MyGreatModule
+<pre><code class="coffeescript">class MyGreatModule
 
   constructor: (@sb) -&gt;
   init: -&gt; alert &quot;Hello world!&quot;
@@ -174,30 +176,30 @@ scaleApp.register &quot;myGreatModule&quot;, MyGreatModule</code></pre>
 start. The <code>destroy</code> function is called when the module has to shut down.
 
 </p>
-<p>Of course you can also unregister a module:
+<p>You can also unregister a module:
 
 </p>
-<pre><code>scaleApp.register(&quot;myGreatModule&quot;);</code></pre>
+<pre><code class="javascript">scaleApp.unregister(&quot;myGreatModule&quot;);</code></pre>
 <a name="start-modules"></a><h2>Start modules</h2>
 <p>After your modules are registered, start your modules:
 
 </p>
-<pre><code>scaleApp.start( &quot;myModuleId&quot; );
+<pre><code class="javascript">scaleApp.start( &quot;myModuleId&quot; );
 scaleApp.start( &quot;anOtherModule&quot; );</code></pre>
 <a name="start-options"></a><h3>Start options</h3>
 <p>You may also want to start several instances of a module:
 
 </p>
-<pre><code>scaleApp.start( &quot;myModuleId&quot;, {instanceId: &quot;myInstanceId&quot; } );
+<pre><code class="javascript">scaleApp.start( &quot;myModuleId&quot;, {instanceId: &quot;myInstanceId&quot; } );
 scaleApp.start( &quot;myModuleId&quot;, {instanceId: &quot;anOtherInstanceId&quot; });</code></pre>
 <p>If you pass a callback function it will be called after the module started:
 
 </p>
-<pre><code>scaleApp.start( &quot;myModuleId&quot;, {callback: function(){ /*...*/ } );</code></pre>
+<pre><code class="javascript">scaleApp.start( &quot;myModuleId&quot;, {callback: function(){ /*...*/ } );</code></pre>
 <p>All other options you pass are available through the sandbox:
 
 </p>
-<pre><code>scaleApp.register( &quot;mod&quot;, function(s){
+<pre><code class="javascript">scaleApp.register( &quot;mod&quot;, function(s){
   sb = s
   return {
     init:    function(){ alert( sb.options.myProperty ); },
@@ -210,23 +212,23 @@ scaleApp.start(&quot;mod&quot;, {myProperty: &quot;myValue&quot;});</code></pre>
 them all:
 
 </p>
-<pre><code>scaleApp.startAll();</code></pre>
+<pre><code class="javascript">scaleApp.startAll();</code></pre>
 <p>To start some special modules at once you can pass an array with the module
 names:
 
 </p>
-<pre><code>scaleApp.startAll([&quot;moduleA&quot;,&quot;moduleB&quot;]);</code></pre>
+<pre><code class="javascript">scaleApp.startAll([&quot;moduleA&quot;,&quot;moduleB&quot;]);</code></pre>
 <p>You can also pass a callback function:
 
 </p>
-<pre><code>scaleApp.startAll(function(){
+<pre><code class="javascript">scaleApp.startAll(function(){
   // do something when all modules were initialized
 });</code></pre>
 <a name="stopping"></a><h2>Stopping</h2>
 <p>It&#39;s obvious:
 
 </p>
-<pre><code>scaleApp.stop(&quot;moduleB&quot;);
+<pre><code class="javascript">scaleApp.stop(&quot;moduleB&quot;);
 scaleApp.stopAll();</code></pre>
 <a name="publish-subscribe"></a><h2>Publish/Subscribe</h2>
 <p>If the module needs to communicate with others, you can use the <code>publish</code> and
@@ -246,37 +248,37 @@ original object.
 <p>The publish function is accessible through the sandbox:
 
 </p>
-<pre><code>sb.publish( &quot;myEventTopic&quot;, myData );</code></pre>
+<pre><code class="javascript">sb.publish( &quot;myEventTopic&quot;, myData );</code></pre>
 <a name="subscribe"></a><h3>Subscribe</h3>
 <p>A message handler could look like this:
 
 </p>
-<pre><code>var messageHandler = function( data, topic ){
-    switch( topic ){
-      case &quot;somethingHappend&quot;:
-        sb.publish( &quot;myEventTopic&quot;, processData(data) );
-        break;
-      case &quot;aNiceTopic&quot;:
-        justProcess( data );
-    break;
-    }
+<pre><code class="javascript">var messageHandler = function( data, topic ){
+  switch( topic ){
+    case &quot;somethingHappend&quot;:
+      sb.publish( &quot;myEventTopic&quot;, processData(data) );
+      break;
+    case &quot;aNiceTopic&quot;:
+      justProcess( data );
+      break;
+  }
 };</code></pre>
 <p>... and it can listen to one or more channels:
 
 </p>
-<pre><code>sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
+<pre><code class="javascript">sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
 sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
 <a name="multi-language-uis"></a><h2>Multi language UIs</h2>
 <p>Link <code>scaleApp.i18n.min.js</code> in your HTML file:
 
 </p>
-<pre><code>&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;
+<pre><code class="html">&lt;script src=&quot;scaleApp.min.js&quot;&gt;&lt;/script&gt;
 &lt;script src=&quot;scaleApp.i18n.min.js&quot;&gt;&lt;/script&gt;</code></pre>
 <p>If your application has to support multiple languages, you can pass an objects
 containing the localized strings with the options object.
 
 </p>
-<pre><code>var myLocalization =
+<pre><code class="javascript">var myLocalization =
 {
   en: { welcome: &quot;Welcome&quot;, ... },
   de: { welcome: &quot;Willkommen&quot;, ... },
@@ -289,11 +291,11 @@ Depending on which language is set globally it returns the corresponding
 localized string.
 
 </p>
-<pre><code>sb._(&quot;myStringId&quot;);</code></pre>
+<pre><code class="javascript">sb._(&quot;myStringId&quot;);</code></pre>
 <p>You can set the language globally by using the <code>setLanguage</code> method:
 
 </p>
-<pre><code>scaleApp.i18n.setLanguage( &quot;de&quot; );</code></pre>
+<pre><code class="javascript">scaleApp.i18n.setLanguage( &quot;de&quot; );</code></pre>
 <a name="plugins"></a><h1>Plugins</h1>
 <ul>
 <li>mvc - very simple MVC classes</li>
@@ -313,7 +315,7 @@ localized string.
 </ul>
 <a name="architecture"></a><h1>Architecture</h1>
 <p>scaleApp is inspired by the talk of Nicholas C. Zakas -
-<a href="http://developer.yahoo.com/yui/theater/video.php?v=zakas-architecture">&quot;Scalable JavaScript Application Architecture&quot;</a>.
+<a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>.
 Unlike his recommendations to abstract DOM manipulations and separating the
 framework from the base library, scaleApp does not implement any DOM methods.
 Just use one of your favorite libs (e.g. jQuery) as base library.
@@ -343,7 +345,7 @@ Also have a look at the <a href="http://github.com/flosse/FAST">source code</a>.
 <a name="licence"></a><h1>Licence</h1>
 <p>scaleApp is licensed under the MIT license.
 For more information have a look at
-<a href="https://github.com/flosse/scaleApp/raw/master/LICENSE.txt">LICENCE.txt</a>.
+<a href="https://raw.github.com/flosse/scaleApp/master/LICENCE.txt">LICENCE.txt</a>.
 </p>
 
 </article>
