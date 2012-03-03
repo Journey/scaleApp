@@ -32,6 +32,10 @@
                         
                             <ol>
                                 
+                                    <li><a href="readme.html#features">Features</a></li>
+                                
+                                    <li><a href="readme.html#extendable">Extendable</a></li>
+                                
                                     <li><a href="readme.html#download-latest-version">Download latest version</a></li>
                                 
                             </ol>
@@ -51,8 +55,6 @@
                                 
                                     <li><a href="readme.html#publish-subscribe">Publish/Subscribe</a></li>
                                 
-                                    <li><a href="readme.html#multi-language-uis">Multi language UIs</a></li>
-                                
                             </ol>
                         
                     </li>
@@ -62,14 +64,13 @@
                         
                             <ol>
                                 
-                            </ol>
-                        
-                    </li>
-                
-                    <li>
-                        <a href="readme.html#features">Features</a>
-                        
-                            <ol>
+                                    <li><a href="readme.html#i18n-multi-language-uis">i18n - Multi language UIs</a></li>
+                                
+                                    <li><a href="readme.html#mvc-very-simple-mvc">mvc - very simple MVC</a></li>
+                                
+                                    <li><a href="readme.html#other-plugins">Other plugins</a></li>
+                                
+                                    <li><a href="readme.html#write-your-own-plugin">Write your own plugin</a></li>
                                 
                             </ol>
                         
@@ -135,6 +136,22 @@ The framework allows you to easily create complex web applications.
 </p>
 <p>scaleApp is inspired by the talk of Nicholas C. Zakas -
 <a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>.
+
+</p>
+<a name="features"></a><h2>Features</h2>
+<ul>
+<li>loose coupling of modules</li>
+<li>small &amp; simple</li>
+<li>no serverside dependencies</li>
+<li>modules can be tested separately</li>
+<li>replacing any module without affecting other modules</li>
+<li>extendable with plugins</li>
+<li>browser and node.js support</li>
+</ul>
+<a name="extendable"></a><h2>Extendable</h2>
+<p>scaleApp itself is very small but it can be extended with plugins. There already
+are some plugins available (e.g. <code>mvc</code>, <code>i18n</code>, etc.) but you can easily define
+your own one.
 
 </p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
@@ -268,7 +285,8 @@ original object.
 </p>
 <pre><code class="javascript">sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
 sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
-<a name="multi-language-uis"></a><h2>Multi language UIs</h2>
+<a name="plugins"></a><h1>Plugins</h1>
+<a name="i18n-multi-language-uis"></a><h2>i18n - Multi language UIs</h2>
 <p>Link <code>scaleApp.i18n.min.js</code> in your HTML file:
 
 </p>
@@ -296,23 +314,70 @@ localized string.
 
 </p>
 <pre><code class="javascript">scaleApp.i18n.setLanguage( &quot;de&quot; );</code></pre>
-<a name="plugins"></a><h1>Plugins</h1>
+<a name="mvc-very-simple-mvc"></a><h2>mvc - very simple MVC</h2>
+<p>Here is a sample use case for using the MVC plugin (in coffeescript).
+
+</p>
+<pre><code class="coffeescript">class MyModel extends scaleApp.Model name: &quot;Noname&quot;</code></pre>
+<pre><code class="coffeescript">class MyView extends scaleApp.View
+
+  constructor: (@model, @sb, @template) -&gt; super @model
+
+  # The render method gets automatically called when the model changes
+  # The &#39;getContainer&#39; method is provided by the dom plugin
+  render: -&gt; @sb.getContainer.innerHTML = @template @model</code></pre>
+<pre><code class="coffeescript">class MyController extends scaleApp.Controller
+
+  changeName: (name) -&gt; @model.set &quot;name&quot;, name</code></pre>
+<pre><code class="coffeescript">registerModule &quot;myModule&quot;, (@sb) -&gt;
+
+  init: (opt) -&gt;
+
+    # You can use any template engine you like. Here it&#39;s
+    # just a simple function
+    template = (model) -&gt; &quot;&lt;h1&gt;Hello #{model.name}&lt;/h1&gt;&quot;
+
+    @m = new MyModel
+    @v = new MyView @m, @sb, @template
+    @c = new MyController @m, @v
+
+    # listen to the &quot;changeName&quot; event
+    @sb.subscribe &quot;changeName&quot;, @c.changeName, @c
+
+  destroy: -&gt;
+    delete @c
+    delete @v
+    delete @m
+    @sb.unsubscribe @</code></pre>
+<pre><code class="coffeescript">scaleApp.publish &quot;changeName&quot;, &quot;Peter&quot;</code></pre>
+<a name="other-plugins"></a><h2>Other plugins</h2>
 <ul>
-<li>mvc - very simple MVC classes</li>
 <li>dom - basic DOM manipulations (currently only used for <code>getContainer</code>)</li>
 <li>util - some helper functions</li>
-<li>i18n - multi language UIs</li>
 </ul>
-<a name="features"></a><h1>Features</h1>
-<ul>
-<li>loose coupling of modules</li>
-<li>small &amp; simple</li>
-<li>no serverside dependencies</li>
-<li>modules can be tested separately</li>
-<li>replacing any module without affecting other modules</li>
-<li>extendable with plugins</li>
-<li>browser and node.js support</li>
-</ul>
+<a name="write-your-own-plugin"></a><h2>Write your own plugin</h2>
+<pre><code class="coffeescript">scaleApp.registerPlugin
+
+  # set the ID of your plugin
+  id: &quot;myPlgin&quot;
+
+  # define the core extensions
+  core:
+    myCoreFunction: -&gt; alert &quot;Hello core plugin&quot;
+    myBoringProperty: &quot;boring&quot;
+
+  # define the sandbox extensions
+  sandbox: (@sb) -&gt;
+    appendFoo: -&gt; @sb.getContainer.append &quot;foo&quot;</code></pre>
+<p>Usage:
+
+</p>
+<pre><code class="coffeescript">scaleApp.myCoreFunction()   # alerts &quot;Hello core plugin&quot;
+
+class MyModule
+  constructor: (@sb) -&gt;
+  init: -&gt; @sb.appendFoo()  # appends &quot;foo&quot; to the container
+  destroy: -&gt;</code></pre>
 <a name="architecture"></a><h1>Architecture</h1>
 <p>scaleApp is inspired by the talk of Nicholas C. Zakas -
 <a href="https://www.youtube.com/watch?v=vXjVFPosQHw">&quot;Scalable JavaScript Application Architecture&quot;</a>
