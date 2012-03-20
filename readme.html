@@ -49,9 +49,15 @@
                                 
                                     <li><a href="readme.html#register-modules">Register modules</a></li>
                                 
+                                    <li><a href="readme.html#asynchronous-initialization">Asynchronous initialization</a></li>
+                                
+                                    <li><a href="readme.html#unregister-modules">Unregister modules</a></li>
+                                
                                     <li><a href="readme.html#start-modules">Start modules</a></li>
                                 
                                     <li><a href="readme.html#stopping">Stopping</a></li>
+                                
+                                    <li><a href="readme.html#listing-modules-and-instances">Listing modules and instances</a></li>
                                 
                                     <li><a href="readme.html#publish-subscribe">Publish/Subscribe</a></li>
                                 
@@ -156,8 +162,8 @@ your own one.
 </p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
 <ul>
-<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.3">scaleApp 0.3.3.tar.gz</a></li>
-<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.3">scaleApp 0.3.3.zip</a></li>
+<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.4">scaleApp 0.3.4.tar.gz</a></li>
+<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.4">scaleApp 0.3.4.zip</a></li>
 </ul>
 <a name="quick-start"></a><h1>Quick Start</h1>
 <p>Link <code>scaleApp.min.js</code> in your HTML file:
@@ -168,7 +174,7 @@ your own one.
 
 </p>
 <pre><code class="shell">sudo npm -g install scaleapp</code></pre>
-<pre><code class="javascript">var sa = require(&quot;scaleapp&quot;).scaleApp</code></pre>
+<pre><code class="javascript">var sa = require(&quot;scaleapp&quot;)</code></pre>
 <a name="register-modules"></a><h2>Register modules</h2>
 <pre><code class="javascript">scaleApp.register( &quot;myModuleId&quot;, function( sb ){
   return {
@@ -193,7 +199,26 @@ scaleApp.register &quot;myGreatModule&quot;, MyGreatModule</code></pre>
 start. The <code>destroy</code> function is called when the module has to shut down.
 
 </p>
-<p>You can also unregister a module:
+<a name="asynchronous-initialization"></a><h2>Asynchronous initialization</h2>
+<p>You can also init or destroy you module in a asynchronous way:
+
+</p>
+<pre><code class="coffeescript">class MyAsyncModule
+
+  constructor: (@sb) -&gt;
+
+  init: (options, done) -&gt;
+    doSomethingAsync (err) -&gt;
+      done err
+  destroy: (done) -&gt;
+    doSomethingAsync (err) -&gt;
+      done err
+
+scaleApp.register &quot;myGreatModule&quot;, MyGreatModule
+end -&gt; alert &quot;now the initialization is done&quot;
+scaleApp.start &quot;myGreatModule&quot;, callback: end</code></pre>
+<a name="unregister-modules"></a><h2>Unregister modules</h2>
+<p>It&#39;s simple:
 
 </p>
 <pre><code class="javascript">scaleApp.unregister(&quot;myGreatModule&quot;);</code></pre>
@@ -247,6 +272,9 @@ names:
 </p>
 <pre><code class="javascript">scaleApp.stop(&quot;moduleB&quot;);
 scaleApp.stopAll();</code></pre>
+<a name="listing-modules-and-instances"></a><h2>Listing modules and instances</h2>
+<pre><code class="javascript">lsModules()   // returns an array of all registered module IDs
+lsInstances() // returns an array of all running instance IDs</code></pre>
 <a name="publish-subscribe"></a><h2>Publish/Subscribe</h2>
 <p>If the module needs to communicate with others, you can use the <code>publish</code> and
 <code>subscribe</code> methods.

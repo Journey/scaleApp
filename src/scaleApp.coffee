@@ -2,7 +2,7 @@ if typeof require is "function"
   Mediator  = require("./Mediator").Mediator
   Sandbox   = require("./Sandbox").Sandbox
 
-VERSION = "0.3.3"
+VERSION = "0.3.4"
 
 modules = {}
 instances = {}
@@ -108,52 +108,90 @@ start = (moduleId, opt={}) ->
 
     throw new Error "module was already started" if instance.running is true
 
-    instance.init instance.options
+    instance.init instance.options, (err) ->
+      opt.callback? err
     instance.running = true
-    opt.callback?()
     true
 
   catch e
     error e
+    opt.callback? new Error "could not start module: #{e.message}"
     false
 
-stop = (id) ->
+stop = (id, cb) ->
   if instance = instances[id]
 
     #i18n.unsubscribe instance
     mediator.unsubscribe instance
 
-    instance.destroy()
+    instance.destroy cb
     delete instances[id]
+    true
   else false
+
+doForAll = (modules, action, cb)->
+
+  count = modules.length
+  errors = []
+
+  actionCB = ->
+    count--
+    checkEnd count, errors, cb
+
+  for m in modules when not action m, actionCB
+    errors.push "'#{m}'"
+    actionCB()
+
+  errors.length is 0
+
+checkEnd = (count, errors, cb) ->
+  if count is 0
+    if errors.length > 0
+      cb? new Error "errors occoured in the following modules: #{errors}"
+    else
+      cb?()
 
 startAll = (cb, opt) ->
 
   if cb instanceof Array
-    mods = (id for id in cb when modules[id])
-    cb = opt
+    mods = cb; cb = opt; opt = null
+    valid = (id for id in mods when modules[id]?)
+    if valid.length isnt mods.length
+      invalid = ("'#{id}'" for id in mods when not (id in valid))
+      invalidErr = new Error "these modules don't exist: #{invalid}"
+
   else switch typeof cb
-    when "undefined","function" then mods = (id for id of modules)
+    when "undefined","function" then mods = valid = (id for id of modules)
+    else mods = valid = []
 
-  if mods?.length >= 1
-    o = {}; o[k] = v for own k,v of modules[mods[0]].options when v
-    origCB = o.callback
+  if valid.length is mods.length is 0
+    cb? null; return true
 
-    if mods[1..].length is 0
-      o.callback = -> origCB?(); cb?()
-    else
-      o.callback = -> origCB?(); startAll mods[1..], cb
-    start mods[0], o
-  else false
+  startAction = (m, next) ->
+    o = {}
+    modOpts = modules[m].options
+    o[k] = v for own k,v of modOpts when v
+    o.callback = (err) ->
+      modOpts.callback? err
+      next()
+    start m, o
 
-stopAll = -> stop id for id of instances
+  (doForAll valid, startAction, (err) -> cb err or invalidErr) and not invalidErr?
+
+stopAll = (cb) -> doForAll (id for id of instances)
+  , ((m, next) -> stop m, next)
+  , cb
 
 coreKeywords = [ "VERSION", "register", "unregister", "registerPlugin", "start"
   "stop", "startAll", "stopAll", "publish", "subscribe", "unsubscribe"
-  "Mediator", "Sandbox", "unregisterAll", "uniqueId" ]
+  "Mediator", "Sandbox", "unregisterAll", "uniqueId", "lsModules", "lsInstances"]
 
 sandboxKeywords = [ "core", "instanceId", "options", "publish"
   "subscribe", "unsubscribe" ]
+
+lsModules = -> (id for id,m of modules)
+
+lsInstances = -> (id for id,m of instances)
 
 registerPlugin = (plugin) ->
 
@@ -169,7 +207,9 @@ registerPlugin = (plugin) ->
     if typeof plugin.core is "object"
       for k of plugin.core
         throw new Error "plugin uses reserved keyword" if k in coreKeywords
-      core[k] = v for k, v of plugin.core
+      for k,v of plugin.core
+        core[k] = v
+        exports?[k] = v
 
     if typeof plugin.onInstantiate is "function"
       onInstantiate plugin.onInstantiate
@@ -193,9 +233,12 @@ core =
   startAll: startAll
   stopAll: stopAll
   uniqueId: uniqueId
+  lsInstances: lsInstances
+  lsModules: lsModules
   Mediator: Mediator
   Sandbox: Sandbox
 
 mediator.installTo core
-exports.scaleApp  = core if exports?
-window.scaleApp   = core if window?
+if exports? and module?
+  exports[k] = v for k,v of core
+window.scaleApp = core if window?

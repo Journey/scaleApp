@@ -97,7 +97,7 @@ checkTargetDir = (cb) -> path.exists targetDir, (exists) ->
 task 'build', 'Build all', ->
   invoke 'build:core'
   invoke 'build:plugins'
-  invoke 'build:modules'
+  #invoke 'build:modules'
 
 task 'build:core', 'Build a single JavaScript file from src files', ->
 
@@ -175,9 +175,6 @@ task 'test', "runs the tests", ->
     util.log stdout if stdout
 
 task 'doc', "create docs", ->
-  
-  checkTargetDir ->
-
-    exec "docco #{coreCoffeeDir}/*.coffee #{pluginCoffeeDir}/*.coffee", (err,stdout) ->
-      util.log err if err
-      util.log stdout if stdout
+  exec "bfdocs bfdocs.json ." , (err,stdout) ->
+    util.log err if err
+    util.log stdout if stdout
