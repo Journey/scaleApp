@@ -1,6 +1,6 @@
 if typeof require is "function"
-  Mediator  = require("./Mediator").Mediator
-  Sandbox   = require("./Sandbox").Sandbox
+  Mediator  = require "./Mediator"
+  Sandbox   = require "./Sandbox"
 
 VERSION = "0.3.7"
 
@@ -268,6 +268,5 @@ core =
   unsubscribe: -> mediator.unsubscribe.apply mediator, arguments
   publish: -> mediator.publish.apply mediator, arguments
 
-if exports? and module?
-  exports[k] = v for k,v of core
+module.exports  = core if module?.exports?
 window.scaleApp = core if window?

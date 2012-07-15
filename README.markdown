@@ -41,13 +41,13 @@ clean and scaleable architecture.
 ## Extendable
 
 scaleApp itself is very small but it can be extended with plugins. There already
-are some plugins available (e.g. `mvc`, `i18n`, etc.) but you can easily define
-your own one.
+are some plugins available (e.g. `mvc`, `i18n`, `permission`, etc.) but you can
+easily define your own one.
 
 ## Download latest version
 
-- [scaleApp 0.3.6.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.6)
-- [scaleApp 0.3.6.zip](https://github.com/flosse/scaleApp/zipball/v0.3.6)
+- [scaleApp 0.3.7.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.7)
+- [scaleApp 0.3.7.zip](https://github.com/flosse/scaleApp/zipball/v0.3.7)
 
 # Quick Start
 
@@ -64,7 +64,7 @@ sudo npm -g install scaleapp
 ```
 
 ```javascript
-var sa = require("scaleapp")
+var sa = require("scaleapp");
 ```
 
 ## Register modules
@@ -95,6 +95,17 @@ scaleApp.register "myGreatModule", MyGreatModule
 
 The `init` function is called by the framework when the module is supposed to
 start. The `destroy` function is called when the module has to shut down.
+
+### Show registered modules
+
+```javascript
+scaleApp.lsModules() // returns an array of module names
+```
+### Show running instances
+
+```javascript
+scaleApp.lsInstances() // returns an array of instance names
+```
 
 ## Asynchronous initialization
 
@@ -242,8 +253,52 @@ var messageHandler = function( data, topic ){
 ... and it can listen to one or more channels:
 
 ```javascript
-sb.subscribe( "somthingHappend", messageHandler );
-sb.subscribe( "aNiceTopic", messageHandler );
+sub1 = sb.subscribe( "somthingHappend", messageHandler );
+sub2 = sb.subscribe( "aNiceTopic", messageHandler );
+```
+Or just do it at once:
+
+```javascript
+sb.subscribe({
+  topicA: cbA
+  topicB: cbB
+  topicC: cbC
+});
+```
+
+You can also subscribe to several channels at once:
+
+```javascript
+sb.subscribe(["a", "b"], cb);
+```
+
+#### attache and detache
+
+A subscription can be detached and attached again:
+
+```javascript
+sub.detach(); // don't listen any more
+sub.attach(); // receive upcoming messages
+```
+
+#### Unsubscribe
+
+You can unsubscribe a function from a channel
+
+```javascript
+sb.unsubscribe("a-channel", callback);
+```
+
+And you can remove a callback function from all channels
+
+```javascript
+sb.unsubscribe(callback);
+```
+
+Or remove all subscriptions from a channel:
+
+```javascript
+sb.unsubscribe("channelName");
 ```
 
 # Plugins
@@ -342,10 +397,33 @@ registerModule "myModule", (@sb) ->
 scaleApp.publish "changeName", "Peter"
 ```
 
+## permission - controll all messages
+
+If you include the `permission` plugin, all `Mediator` methods will be rejected
+by default to enforce you to permit any message method explicitely.
+
+```coffeescript
+scaleApp.addPermission "instanceA", "subscribe"
+scaleApp.addPermission "instanceB", "publish"
+```
+
+Now `instanceA` is allowed to subscribe to a channel but `instanceB` cannot
+subscribe. Therefore `instanceB` can publish data and `instanceB` can not.
+
+Of course you can remove a permission at any time:
+
+```coffeescript
+scaleApp.removePermission "moduleA", "publish"
+```
+
+## util - some helper functions
+
+ - `sb.mixin(receivingClass, givingClass, override=false)`
+ - `sb.countObjectKeys(object)`
+
 ## Other plugins
 
 - dom - basic DOM manipulations (currently only used for `getContainer`)
-- util - some helper functions
 
 ## Write your own plugin
 
@@ -375,25 +453,28 @@ class MyModule
   init: -> @sb.appendFoo()  # appends "foo" to the container
   destroy: ->
 ```
-# Build
+# Build browser bundles
+
+Just type
 
 ```shell
-cake build
+cake bundle
 ```
+that will create `scaleApp.js`, `scaleApp.min.js`, `scaleApp.full.js` and
+`scaleApp.full.min.js` whithin the `build/bundles/` directory.
 
-if you want all plugins included
+If you want scaleApp bundled with special plugins type
 
 ```shell
-cake build:full
+cake -p [PLUGIN_NAME] bundle
 ```
+e.g. `cake -p dom,mvc bundle` creates the file `scaleApp.custom.js` that
+contains scaleApp itself the dom plugin and the mvc plugin.
 
 # Testing
 
-[jasmine-node](https://github.com/mhevery/jasmine-node)
-is required (`npm install -g jasmine-node`) for running the tests.
-
 ```shell
-cake test
+npm test
 ```
 
 # Demo

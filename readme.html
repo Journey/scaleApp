@@ -76,6 +76,10 @@
                                 
                                     <li><a href="/readme.html#mvc-very-simple-mvc">mvc - very simple MVC</a></li>
                                 
+                                    <li><a href="/readme.html#permission-controll-all-messages">permission - controll all messages</a></li>
+                                
+                                    <li><a href="/readme.html#util-some-helper-functions">util - some helper functions</a></li>
+                                
                                     <li><a href="/readme.html#other-plugins">Other plugins</a></li>
                                 
                                     <li><a href="/readme.html#write-your-own-plugin">Write your own plugin</a></li>
@@ -85,7 +89,7 @@
                     </li>
                 
                     <li>
-                        <a href="/readme.html#build">Build</a>
+                        <a href="/readme.html#build-browser-bundles">Build browser bundles</a>
                         
                             <ol>
                                 
@@ -172,14 +176,14 @@ clean and scaleable architecture.
 </ul>
 <a name="extendable"></a><h2>Extendable</h2>
 <p>scaleApp itself is very small but it can be extended with plugins. There already
-are some plugins available (e.g. <code>mvc</code>, <code>i18n</code>, etc.) but you can easily define
-your own one.
+are some plugins available (e.g. <code>mvc</code>, <code>i18n</code>, <code>permission</code>, etc.) but you can
+easily define your own one.
 
 </p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
 <ul>
-<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.6">scaleApp 0.3.6.tar.gz</a></li>
-<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.6">scaleApp 0.3.6.zip</a></li>
+<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.7">scaleApp 0.3.7.tar.gz</a></li>
+<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.7">scaleApp 0.3.7.zip</a></li>
 </ul>
 <a name="quick-start"></a><h1>Quick Start</h1>
 <p>Link <code>scaleApp.min.js</code> in your HTML file:
@@ -190,7 +194,7 @@ your own one.
 
 </p>
 <pre><code class="lang-shell">sudo npm -g install scaleapp</code></pre>
-<pre><code class="lang-javascript">var sa = require(&quot;scaleapp&quot;)</code></pre>
+<pre><code class="lang-javascript">var sa = require(&quot;scaleapp&quot;);</code></pre>
 <a name="register-modules"></a><h2>Register modules</h2>
 <pre><code class="lang-javascript">scaleApp.register( &quot;myModuleId&quot;, function( sb ){
   return {
@@ -215,6 +219,10 @@ scaleApp.register &quot;myGreatModule&quot;, MyGreatModule</code></pre>
 start. The <code>destroy</code> function is called when the module has to shut down.
 
 </p>
+<a name="show-registered-modules"></a><h3>Show registered modules</h3>
+<pre><code class="lang-javascript">scaleApp.lsModules() // returns an array of module names</code></pre>
+<a name="show-running-instances"></a><h3>Show running instances</h3>
+<pre><code class="lang-javascript">scaleApp.lsInstances() // returns an array of instance names</code></pre>
 <a name="asynchronous-initialization"></a><h2>Asynchronous initialization</h2>
 <p>You can also init or destroy you module in a asynchronous way:
 
@@ -327,8 +335,39 @@ original object.
 <p>... and it can listen to one or more channels:
 
 </p>
-<pre><code class="lang-javascript">sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
-sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
+<pre><code class="lang-javascript">sub1 = sb.subscribe( &quot;somthingHappend&quot;, messageHandler );
+sub2 = sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
+<p>Or just do it at once:
+
+</p>
+<pre><code class="lang-javascript">sb.subscribe({
+  topicA: cbA
+  topicB: cbB
+  topicC: cbC
+});</code></pre>
+<p>You can also subscribe to several channels at once:
+
+</p>
+<pre><code class="lang-javascript">sb.subscribe([&quot;a&quot;, &quot;b&quot;], cb);</code></pre>
+<a name="attache-and-detache"></a><h4>attache and detache</h4>
+<p>A subscription can be detached and attached again:
+
+</p>
+<pre><code class="lang-javascript">sub.detach(); // don&#39;t listen any more
+sub.attach(); // receive upcoming messages</code></pre>
+<a name="unsubscribe"></a><h4>Unsubscribe</h4>
+<p>You can unsubscribe a function from a channel
+
+</p>
+<pre><code class="lang-javascript">sb.unsubscribe(&quot;a-channel&quot;, callback);</code></pre>
+<p>And you can remove a callback function from all channels
+
+</p>
+<pre><code class="lang-javascript">sb.unsubscribe(callback);</code></pre>
+<p>Or remove all subscriptions from a channel:
+
+</p>
+<pre><code class="lang-javascript">sb.unsubscribe(&quot;channelName&quot;);</code></pre>
 <a name="plugins"></a><h1>Plugins</h1>
 <a name="i18n-multi-language-uis"></a><h2>i18n - Multi language UIs</h2>
 <p>Link <code>scaleApp.i18n.min.js</code> in your HTML file:
@@ -398,10 +437,29 @@ localized string.
     delete @m
     @sb.unsubscribe @</code></pre>
 <pre><code class="lang-coffeescript">scaleApp.publish &quot;changeName&quot;, &quot;Peter&quot;</code></pre>
+<a name="permission-controll-all-messages"></a><h2>permission - controll all messages</h2>
+<p>If you include the <code>permission</code> plugin, all <code>Mediator</code> methods will be rejected
+by default to enforce you to permit any message method explicitely.
+
+</p>
+<pre><code class="lang-coffeescript">scaleApp.addPermission &quot;instanceA&quot;, &quot;subscribe&quot;
+scaleApp.addPermission &quot;instanceB&quot;, &quot;publish&quot;</code></pre>
+<p>Now <code>instanceA</code> is allowed to subscribe to a channel but <code>instanceB</code> cannot
+subscribe. Therefore <code>instanceB</code> can publish data and <code>instanceB</code> can not.
+
+</p>
+<p>Of course you can remove a permission at any time:
+
+</p>
+<pre><code class="lang-coffeescript">scaleApp.removePermission &quot;moduleA&quot;, &quot;publish&quot;</code></pre>
+<a name="util-some-helper-functions"></a><h2>util - some helper functions</h2>
+<ul>
+<li><code>sb.mixin(receivingClass, givingClass, override=false)</code></li>
+<li><code>sb.countObjectKeys(object)</code></li>
+</ul>
 <a name="other-plugins"></a><h2>Other plugins</h2>
 <ul>
 <li>dom - basic DOM manipulations (currently only used for <code>getContainer</code>)</li>
-<li>util - some helper functions</li>
 </ul>
 <a name="write-your-own-plugin"></a><h2>Write your own plugin</h2>
 <pre><code class="lang-coffeescript">scaleApp.registerPlugin
@@ -426,18 +484,25 @@ class MyModule
   constructor: (@sb) -&gt;
   init: -&gt; @sb.appendFoo()  # appends &quot;foo&quot; to the container
   destroy: -&gt;</code></pre>
-<a name="build"></a><h1>Build</h1>
-<pre><code class="lang-shell">cake build</code></pre>
-<p>if you want all plugins included
+<a name="build-browser-bundles"></a><h1>Build browser bundles</h1>
+<p>Just type
 
 </p>
-<pre><code class="lang-shell">cake build:full</code></pre>
+<pre><code class="lang-shell">cake bundle</code></pre>
+<p>that will create <code>scaleApp.js</code>, <code>scaleApp.min.js</code>, <code>scaleApp.full.js</code> and
+<code>scaleApp.full.min.js</code> whithin the <code>build/bundles/</code> directory.
+
+</p>
+<p>If you want scaleApp bundled with special plugins type
+
+</p>
+<pre><code class="lang-shell">cake -p [PLUGIN_NAME] bundle</code></pre>
+<p>e.g. <code>cake -p dom,mvc bundle</code> creates the file <code>scaleApp.custom.js</code> that
+contains scaleApp itself the dom plugin and the mvc plugin.
+
+</p>
 <a name="testing"></a><h1>Testing</h1>
-<p><a href="https://github.com/mhevery/jasmine-node">jasmine-node</a>
-is required (<code>npm install -g jasmine-node</code>) for running the tests.
-
-</p>
-<pre><code class="lang-shell">cake test</code></pre>
+<pre><code class="lang-shell">npm test</code></pre>
 <a name="demo"></a><h1>Demo</h1>
 <p><strong>WARNING</strong>: the demo is out of date
 
