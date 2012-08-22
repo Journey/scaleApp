@@ -1,9 +1,10 @@
-src/*.coffee
-src/plugins/*.coffee
+src/
 spec/
 build/
+bundles/
 Cakefile
 .gitignore
 .npmignore
 .travis.yml
+*.log
 *.swp

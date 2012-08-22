@@ -1,19 +1,21 @@
-if typeof require is "function"
+###
+This program is distributed under the terms of the MIT license.
+Copyright (c) 2011-2012 Markus Kohlhase (mail@markus-kohlhase.de)
+###
+
+if module?.exports? and typeof require is "function" and not require.amd?
   Mediator  = require "./Mediator"
   Sandbox   = require "./Sandbox"
+  util      = require "./Util"
 
-VERSION = "0.3.7"
+VERSION = "0.3.8"
 
-modules = {}
-instances = {}
-mediator = new Mediator
-plugins = {}
-error = (e) -> console?.error? e.message
-
-uniqueId = (length=8) ->
- id = ""
- id += Math.random().toString(36).substr(2) while id.length < length
- id.substr 0, length
+modules       = {}
+instances     = {}
+instanceOpts  = {}
+mediator      = new Mediator
+plugins       = {}
+error         = (e) -> console?.error? e.message
 
 # container for all functions that gets called when an instance gets created
 onInstantiateFunctions = _always: []
@@ -30,28 +32,42 @@ onInstantiate = (fn, moduleId) ->
   else if not moduleId?
     onInstantiateFunctions._always.push entry
 
+getInstanceOptions = (instanceId, module, opt) ->
+
+  # Merge default options and instance options and start options,
+  # without modifying the defaults.
+  o = {}
+
+  # first copy default module options
+  o[key] = val for key, val of module.options
+
+  # then copy instance options
+  io = instanceOpts[instanceId]
+  o[key] = val for key, val of io if io
+
+  # and finally copy start options
+  o[key] = val for key, val of opt if opt
+
+  # return options
+  o
+
 createInstance = (moduleId, instanceId=moduleId, opt) ->
 
   module = modules[moduleId]
 
   return instances[instanceId] if instances[instanceId]?
 
-  # Merge default options and instance options,
-  # without modifying the defaults.
-  instanceOpts = {}
-  instanceOpts[key] = val for key, val of module.options
-  instanceOpts[key] = val for key, val of opt if opt
-
-  sb = new Sandbox core, instanceId, instanceOpts
+  iOpts = getInstanceOptions instanceId, module, opt
+  sb = new Sandbox core, instanceId, iOpts
   mediator.installTo sb
 
   for i,p of plugins when p.sandbox?
     plugin = new p.sandbox sb
     sb[k] = v for own k,v of plugin
 
-  instance = new module.creator sb
-  instance.options = instanceOpts
-  instance.id = instanceId
+  instance              = new module.creator sb
+  instance.options      = iOpts
+  instance.id           = instanceId
   instances[instanceId] = instance
 
   for n in [instanceId, '_always']
@@ -61,17 +77,17 @@ createInstance = (moduleId, instanceId=moduleId, opt) ->
 
 addModule = (moduleId, creator, opt) ->
 
-  throw new Error "moudule ID has to be a string"            unless typeof moduleId  is "string"
-  throw new Error "creator has to be a constructor function" unless typeof creator   is "function"
-  throw new Error "option parameter has to be an object"     unless typeof opt       is "object"
+  throw new TypeError "module ID has to be a string"             unless typeof moduleId  is "string"
+  throw new TypeError "creator has to be a constructor function" unless typeof creator   is "function"
+  throw new TypeError "option parameter has to be an object"     unless typeof opt       is "object"
 
   modObj = new creator()
 
-  throw new Error "creator has to return an object"          unless typeof modObj          is "object"
-  throw new Error "module has to have an init function"      unless typeof modObj.init     is "function"
-  throw new Error "module has to have a destroy function"    unless typeof modObj.destroy  is "function"
+  throw new TypeError "creator has to return an object"          unless typeof modObj          is "object"
+  throw new TypeError "module has to have an init function"      unless typeof modObj.init     is "function"
+  throw new TypeError "module has to have a destroy function"    unless typeof modObj.destroy  is "function"
 
-  throw new Error "module #{moduleId} was already registered" if modules[moduleId]?
+  throw new TypeError "module #{moduleId} was already registered" if modules[moduleId]?
 
   modules[moduleId] =
     creator: creator
@@ -87,6 +103,12 @@ register = (moduleId, creator, opt = {}) ->
     error new Error "could not register module '#{moduleId}': #{e.message}"
     false
 
+setInstanceOptions = (instanceId, opt) ->
+  throw new TypeError "instance ID has to be a string"        unless typeof instanceId  is "string"
+  throw new TypeError "option parameter has to be an object"  unless typeof opt         is "object"
+  instanceOpts[instanceId] ?= {}
+  instanceOpts[instanceId][k] = v for k,v of opt
+
 unregister = (id) ->
   if modules[id]?
     delete modules[id]
@@ -95,11 +117,6 @@ unregister = (id) ->
     false
 
 unregisterAll = -> unregister id for id of modules
-
-getArgNames = (fn) ->
-  args = fn.toString().match(/function\b[^(]*\(([^)]*)\)/)[1]
-  args = args.split /\s*,\s*/
-  (a for a in args when a.trim() isnt '')
 
 start = (moduleId, opt={}) ->
 
@@ -114,7 +131,7 @@ start = (moduleId, opt={}) ->
     throw new Error "module was already started" if instance.running is true
 
     # if the module wants to init in an asynchronous way
-    if (getArgNames instance.init).length >= 2
+    if (util.getArgumentNames instance.init).length >= 2
       # then define a callback
       instance.init instance.options, (err) -> opt.callback? err
     else
@@ -137,7 +154,7 @@ stop = (id, cb) ->
     mediator.unsubscribe instance
 
     # if the module wants destroy in an asynchronous way
-    if (getArgNames instance.destroy).length >= 1
+    if (util.getArgumentNames instance.destroy).length >= 1
       # then define a callback
       instance.destroy (err) ->
         cb? err
@@ -150,32 +167,6 @@ stop = (id, cb) ->
     delete instances[id]
     true
   else false
-
-doForAll = (modules, action, cb)->
-
-  count = modules.length
-  if count is 0
-    cb? null
-    true
-  else
-
-    errors = []
-
-    actionCB = ->
-      count--
-      checkEnd count, errors, cb
-
-    for m in modules when not action m, actionCB
-      errors.push "'#{m}'"
-
-    errors.length is 0
-
-checkEnd = (count, errors, cb) ->
-  if count is 0
-    if errors.length > 0
-      cb? new Error "errors occoured in the following modules: #{errors}"
-    else
-      cb? null
 
 startAll = (cb, opt) ->
 
@@ -198,22 +189,25 @@ startAll = (cb, opt) ->
     o[k] = v for own k,v of modOpts when v
     o.callback = (err) ->
       modOpts.callback? err
-      next?()
+      next err
     start m, o
 
-  aCB = (err) ->
-    cb? err or invalidErr
-  (doForAll valid, startAction, aCB) and not invalidErr?
+  util.doForAll valid, startAction, (err) ->
+    if err?.length > 0
+      e = new Error "errors occoured in the following modules: #{("'#{valid[i]}'" for x,i in err when x?)}"
+    cb? e or invalidErr
 
-stopAll = (cb) -> doForAll (id for id of instances)
-  , ((m, next) -> stop m, next)
-  , cb
+  not invalidErr?
+
+stopAll = (cb) ->
+  util.doForAll (id for id of instances), stop, cb
 
 coreKeywords = [ "VERSION", "register", "unregister", "registerPlugin", "start"
-  "stop", "startAll", "stopAll", "publish", "subscribe", "unsubscribe"
-  "Mediator", "Sandbox", "unregisterAll", "uniqueId", "lsModules", "lsInstances"]
+  "stop", "startAll", "stopAll", "publish", "subscribe", "unsubscribe", "on",
+  "emit", "setInstanceOptions", "Mediator", "Sandbox", "unregisterAll",
+  "uniqueId", "lsModules", "lsInstances"]
 
-sandboxKeywords = [ "core", "instanceId", "options", "publish"
+sandboxKeywords = [ "core", "instanceId", "options", "publish", "emit", "on"
   "subscribe", "unsubscribe" ]
 
 lsModules = -> (id for id,m of modules)
@@ -255,18 +249,25 @@ core =
   unregister: unregister
   unregisterAll: unregisterAll
   registerPlugin: registerPlugin
+  setInstanceOptions: setInstanceOptions
   start: start
   stop: stop
   startAll: startAll
   stopAll: stopAll
-  uniqueId: uniqueId
+  uniqueId: util.uniqueId
   lsInstances: lsInstances
   lsModules: lsModules
+  util: util
   Mediator: Mediator
   Sandbox: Sandbox
-  subscribe: -> mediator.subscribe.apply mediator, arguments
-  unsubscribe: -> mediator.unsubscribe.apply mediator, arguments
-  publish: -> mediator.publish.apply mediator, arguments
+  subscribe:    -> mediator.subscribe.apply mediator, arguments
+  on:           -> mediator.subscribe.apply mediator, arguments
+  unsubscribe:  -> mediator.unsubscribe.apply mediator, arguments
+  publish:      -> mediator.publish.apply mediator, arguments
+  emit:         -> mediator.publish.apply mediator, arguments
 
 module.exports  = core if module?.exports?
-window.scaleApp = core if window?
+if define?.amd?
+  (define -> core) if define?.amd?
+else if window?
+  window.scaleApp = core

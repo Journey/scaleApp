@@ -41,13 +41,13 @@ clean and scaleable architecture.
 ## Extendable
 
 scaleApp itself is very small but it can be extended with plugins. There already
-are some plugins available (e.g. `mvc`, `i18n`, `permission`, etc.) but you can
-easily define your own one.
+are some plugins available (e.g. `mvc`, `i18n`, `permission`, `state`, etc.) but
+you can easily define your own one.
 
 ## Download latest version
 
-- [scaleApp 0.3.7.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.7)
-- [scaleApp 0.3.7.zip](https://github.com/flosse/scaleApp/zipball/v0.3.7)
+- [scaleApp 0.3.8.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.8)
+- [scaleApp 0.3.8.zip](https://github.com/flosse/scaleApp/zipball/v0.3.8)
 
 # Quick Start
 
@@ -222,16 +222,19 @@ If the module needs to communicate with others, you can use the `publish` and
 The `publish` function takes three parameters whereas the last one is optional:
 - `topic` : the channel name you want to publish to
 - `data`  : the data itself
-- `publishReference` : If the data should be passed as a reference to the other
-modules this parameter has to be set to `true`.
-By default the data object gets copied so that other modules can't influence the
-original object.
+- `opt`   : options or callback
+    - `publishReference` : If the data should be passed as a reference to the
+       other modules this parameter has to be set to `true`.
+       By default the data object gets copied so that other modules can't
+       influence the original object.
 
 The publish function is accessible through the sandbox:
 
 ```javascript
 sb.publish( "myEventTopic", myData );
 ```
+
+You can also use the shorter method alias `emit`.
 
 ### Subscribe
 
@@ -271,6 +274,8 @@ You can also subscribe to several channels at once:
 ```javascript
 sb.subscribe(["a", "b"], cb);
 ```
+
+If you prefer a shorter method name you can use the alias `on`.
 
 #### attache and detache
 
@@ -348,6 +353,8 @@ scaleApp.i18n.setGlobal( myGlobalObj );
 
 ## mvc - very simple MVC
 
+![scaleApp mvc](https://raw.github.com/flosse/scaleApp/master/mvc.png)
+
 Here is a sample use case for using the MVC plugin (in coffeescript).
 
 ```coffeescript
@@ -395,6 +402,40 @@ registerModule "myModule", (@sb) ->
 
 ```coffeescript
 scaleApp.publish "changeName", "Peter"
+```
+## state - [Finite State Machine](https://en.wikipedia.org/wiki/Finite_state_machine)
+
+![scaleApp fsm](https://raw.github.com/flosse/scaleApp/master/fsm.png)
+
+```coffeescript
+s = new scaleApp.StateMachine
+          start: "a"
+          states:
+            a:      { enter: (ev) -> console.log "entering state #{ev.to}"  }
+            b:      { leave: (ev) -> console.log "leaving state #{ev.from}" }
+            c:      { enter: [cb1, cb2], leave: cb3                         }
+            fatal:  { enter: -> console.error "something went wrong"        }
+          transitions:
+            x:    { from: "a"        to: "b"     }
+            y:    { from: ["b","c"]  to: "c"     }
+            uups: { from: "*"        to: "fatal" }
+
+s.addState "d", { enter: -> }                 # add an additional state
+s.addState { y: {}, z: { enter: cb } }        # or add multiple states
+
+s.addTransition "t", { from: "b", to: "d" }   # add a transition
+s.can "t"                                     # false because 'a' is current state
+s.can "x"                                     # true
+
+s.onLeave "a", (transition, eventName, next) ->
+  # ...
+  next()
+
+s.onEnter "b", (transitioin, eventName, next) ->
+  doSomething (err) -> next err
+
+s.fire "x"
+s.current                                     # b
 ```
 
 ## permission - controll all messages

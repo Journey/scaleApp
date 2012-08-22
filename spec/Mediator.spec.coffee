@@ -29,6 +29,12 @@ describe "Mediator", ->
       (expect typeof sub.detach).toEqual "function"
       (expect sub).not.toEqual sub2
 
+    it "returns false if callback is not a function", ->
+      (expect @paul.subscribe "a", 345).toEqual false
+
+    it "has an alias method named 'on'", ->
+      (expect @paul.on).toEqual @paul.subscribe
+
     it "subscribes a function to several channels", ->
 
       cb1 = sinon.spy()
@@ -175,9 +181,63 @@ describe "Mediator", ->
     it "is an accessible function", ->
       (expect typeof @paul.publish).toEqual "function"
 
+    it "has an alias method named 'emit'", ->
+      (expect @paul.emit).toEqual @paul.publish
+
     it "returns the current context", ->
       (expect @paul.publish "my channel", {}).toEqual @paul
       (expect (new @Mediator).subscribe "my channel", ->).not.toEqual @paul
+
+    it "calls the callback if it is defined", (done) ->
+      cb = sinon.spy()
+      @paul.on "event", cb
+      @paul.publish "event", {}, (err) ->
+        (expect cb.callCount).toEqual 1
+        done()
+
+    it "calls the callback even if there are not subsribers", (done) ->
+      m1 = new @Mediator
+      m2 = new @Mediator
+      m1.publish "x", (err)->
+        (expect err?).toBe false
+        m2.publish "x", "foo", (err)->
+          (expect err?).toBe false
+          done()
+
+    it "passes an error if a callback returned false", (done) ->
+      cb = sinon.spy()
+      @paul.on "event", ->
+        cb()
+        false
+      @paul.publish "event", {}, (err) ->
+        (expect err).not.toBe null
+        done()
+
+
+    it "calls the callback asynchrounously", (done) ->
+      cb  = sinon.spy()
+      cb2 = sinon.spy()
+      @paul.on "event", (data, channel, next) ->
+        setTimeout (-> cb(); next null), 3
+      @paul.on "event", (data, channel, x) ->
+        setTimeout (-> cb2(); x null), 2
+      @paul.publish "event", {}, (err) ->
+        (expect cb.callCount).toEqual 1
+        (expect cb2.callCount).toEqual 1
+        (expect err?).toBe false
+        done()
+
+    it "calls the callback asynchrounously and looks for errors", (done) ->
+
+      @paul.on "event", (data, channel, next) ->
+        setTimeout (-> next null), 1
+      @paul.on "event", (data, channel, x) ->
+        setTimeout (-> x new Error "fake1"), 1
+      @paul.on "event", (data, channel, x) ->
+        x new Error "fake2"
+      @paul.publish "event", {}, (err) ->
+        (expect err.message).toEqual "fake1; fake2"
+        done()
 
   describe "installTo function", ->
 
@@ -193,17 +253,19 @@ describe "Mediator", ->
       mediator.installTo myObj
 
       (expect typeof myObj.subscribe).toEqual "function"
+      (expect typeof myObj.on).toEqual "function"
       (expect typeof myObj.publish).toEqual "function"
+      (expect typeof myObj.emit).toEqual "function"
       (expect typeof myObj.unsubscribe).toEqual "function"
       (expect typeof myObj.channels).toEqual "object"
 
       myObj.subscribe "ch", cb
-      mediator.subscribe "ch", cb2
-      mediator.subscribe "ch2", cb2
+      mediator.on "ch", cb2
+      mediator.on "ch2", cb2
 
       myObj.publish "ch", "foo"
       mediator.publish "ch", "bar"
-      mediator.publish "ch2", "blub"
+      mediator.emit "ch2", "blub"
 
       (expect cb.callCount).toEqual 2
       (expect cb2.callCount).toEqual 3
@@ -240,7 +302,8 @@ describe "Mediator", ->
     beforeEach ->
       @peter = new @Mediator
       @data = { bla: "blub"}
-      @cb = sinon.spy()
+      @cb  = sinon.spy()
+      @cb1 = sinon.spy()
       @cb2 = sinon.spy()
       @cb3 = sinon.spy()
       @anObject = {}
@@ -285,9 +348,9 @@ describe "Mediator", ->
         (expect data instanceof Array).toBeTruthy()
 
       @paul.publish "obj", obj
-      @paul.publish "obj-ref", obj, true
+      @paul.publish "obj-ref", obj, publishReference: true
       @paul.publish "arr", arr
-      @paul.publish "arr-ref", arr, true
+      @paul.publish "arr-ref", arr, publishReference: true
       done()
 
     it "does not publish data to other topics", ->
@@ -296,17 +359,18 @@ describe "Mediator", ->
       @paul.publish "another channel", @data
       (expect @cb).not.toHaveBeenCalled()
 
-  describe "auto subscription", ->
+    describe "auto subscription", ->
 
-      # ! NOT IMPLEMENTED !
+      it "publishes subtopics to parent topics", ->
 
-    it "//publishes subtopics to parent topics", ->
+        @paul.cascadeChannels = true
+        @paul.on "parentTopic", @cb
+        @paul.on "parentTopic/subTopic", @cb1
+        @paul.on "parentTopic/subTopic/subsub", @cb2
+        @paul.on "parentTopic/otherSubTopic", @cb3
 
-      @paul.subscribe "parentTopic", @cb
-      @peter.subscribe "parentTopic/subTopic", @cb2
-      @peter.subscribe "parentTopic/otherSubTopic", @cb3
-
-      @paul.publish "parentTopic/subTopic", @data
-      (expect @cb).toHaveBeenCalled()
-      (expect @cb2).toHaveBeenCalled()
-      (expect @cb3).not.toHaveBennCalled()
+        @paul.emit "parentTopic/subTopic/subsub", @data
+        (expect @cb).toHaveBeenCalled()
+        (expect @cb1).toHaveBeenCalled()
+        (expect @cb2).toHaveBeenCalled()
+        (expect @cb3).not.toHaveBeenCalled()

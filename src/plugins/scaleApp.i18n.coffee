@@ -47,6 +47,7 @@ class SBPlugin
 
   i18n:
     subscribe: subscribe
+    on: subscribe
     unsubscribe: unsubscribe
 
   _: (text) -> get text, @sb.options.i18n
@@ -64,8 +65,10 @@ plugin =
       baseLanguage: baseLanguage
       get: get
       subscribe: subscribe
+      on: subscribe
       unsubscribe: unsubscribe
       setGlobal: setGlobal
 
 window?.scaleApp.registerPlugin plugin if window?.scaleApp?
 module.exports = plugin if module?.exports?
+(define -> plugin) if define?.amd?

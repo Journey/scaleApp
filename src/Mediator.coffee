@@ -1,6 +1,9 @@
+if module?.exports? and typeof require is "function"
+  util = require "./Util"
+
 class Mediator
 
-  constructor: (obj) ->
+  constructor: (obj, @cascadeChannels=false) ->
     @channels = {}
     @installTo obj if obj
 
@@ -22,11 +25,16 @@ class Mediator
     else if typeof channel is "object"
       @subscribe k,v,fn for k,v of channel
     else
+      return false unless typeof fn      is "function"
+      return false unless typeof channel is "string"
       subscription = { context: context, callback: fn }
       (
         attach: -> that.channels[channel].push subscription; @
         detach: -> Mediator._rm that, channel, subscription.callback; @
       ).attach()
+
+  # Alias for subscribe
+  on: @::subscribe
 
   # ## Unsubscribe from a topic
   #
@@ -50,34 +58,46 @@ class Mediator
   # Parameters:
   # (String) topic             - The topic name
   # (Object) data              - The data that gets published
-  # (Boolean) publishReference - If the data should be passed as a reference to
+  # (Object)
+  #     callback:              - callback metthod
+  #     publishReference       - If the data should be passed as a reference to
   #                              the other modules this parameter has to be set
   #                              to *true*.
   #                              By default the data object gets copied so that
   #                              other modules can't influence the original
   #                              object.
-  publish: (channel, data, publishReference) ->
+  publish: (channel, data, opt={}) ->
 
-    if @channels[channel]?
-      for subscription in @channels[channel]
+    if typeof data is "function"
+      opt = data
+      data = undefined
+    return false unless typeof channel is "string"
+    subscribers = @channels[channel] or []
 
-        if publishReference isnt true and typeof data is "object"
-          if data instanceof Array
-            copy = (v for v in data)
+    if data? and opt.publishReference isnt true and typeof data is "object"
+      copy = util.clone data
+
+    tasks = for sub in subscribers then do (sub) ->
+      (next) ->
+        try
+          if (util.getArgumentNames sub.callback).length >= 3
+            sub.callback.apply sub.context, [(copy or data), channel, next]
           else
-            copy = {}
-            copy[k] = v for k,v of data
-          try
-            subscription.callback.apply subscription.context, [copy, channel]
-          catch e
-            console?.error? e
+            next null, sub.callback.apply sub.context, [(copy or data), channel]
+        catch e
+          next e
 
-        else
-          try
-            subscription.callback.apply subscription.context, [data, channel]
-          catch e
-            console?.error? e
+    util.runSeries tasks, (errors, results) ->
+      if errors?.length > 0
+        e = new Error (x.message for x in errors when x?).join '; '
+      opt? e
+
+    if @cascadeChannels and (chnls = channel.split('/')).length > 1
+      @publish chnls[0...-1].join('/'), data, opt
     @
+
+  # Alias for publish
+  emit: @::publish
 
   # ## Install Pub/Sub functions to an object
   installTo: (obj) ->
