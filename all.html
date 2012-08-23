@@ -4,22 +4,22 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>scaleApp</title>
     <link type="text/css" rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans&subset=latin">
-    <link type="text/css" rel="stylesheet" href="css/reset.css">
-    <link type="text/css" rel="stylesheet" href="css/docs.css">
-    <link type="text/css" rel="stylesheet" href="css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="/css/print.css" media="print">
     <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/dark.min.css">
     
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
     <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
     
-    <script type="text/javascript" src="js/viewer.js"></script>
+    <script type="text/javascript" src="/js/viewer.js"></script>
 </head>
 <body>
     <div id="page">
         <a name="top" />
         
             <header id="header">
-                <h1><a href="">scaleApp</a></h1>
+                <h1><a href="/">scaleApp</a></h1>
             </header>
         
         <div id='content'><a name="what-is-scaleapp"></a><h1>What is scaleApp?</h1>
@@ -69,14 +69,14 @@ clean and scaleable architecture.
 </ul>
 <a name="extendable"></a><h2>Extendable</h2>
 <p>scaleApp itself is very small but it can be extended with plugins. There already
-are some plugins available (e.g. <code>mvc</code>, <code>i18n</code>, <code>permission</code>, etc.) but you can
-easily define your own one.
+are some plugins available (e.g. <code>mvc</code>, <code>i18n</code>, <code>permission</code>, <code>state</code>, etc.) but
+you can easily define your own one.
 
 </p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
 <ul>
-<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.7">scaleApp 0.3.7.tar.gz</a></li>
-<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.7">scaleApp 0.3.7.zip</a></li>
+<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.8">scaleApp 0.3.8.tar.gz</a></li>
+<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.8">scaleApp 0.3.8.zip</a></li>
 </ul>
 <a name="quick-start"></a><h1>Quick Start</h1>
 <p>Link <code>scaleApp.min.js</code> in your HTML file:
@@ -201,16 +201,20 @@ lsInstances() // returns an array of all running instance IDs</code></pre>
 <p>The <code>publish</code> function takes three parameters whereas the last one is optional:
 - <code>topic</code> : the channel name you want to publish to
 - <code>data</code>  : the data itself
-- <code>publishReference</code> : If the data should be passed as a reference to the other
-modules this parameter has to be set to <code>true</code>.
-By default the data object gets copied so that other modules can&#39;t influence the
-original object.
+- <code>opt</code>   : options or callback
+    - <code>publishReference</code> : If the data should be passed as a reference to the
+       other modules this parameter has to be set to <code>true</code>.
+       By default the data object gets copied so that other modules can&#39;t
+       influence the original object.
 
 </p>
 <p>The publish function is accessible through the sandbox:
 
 </p>
 <pre><code class="lang-javascript">sb.publish( &quot;myEventTopic&quot;, myData );</code></pre>
+<p>You can also use the shorter method alias <code>emit</code>.
+
+</p>
 <a name="subscribe"></a><h3>Subscribe</h3>
 <p>A message handler could look like this:
 
@@ -242,6 +246,9 @@ sub2 = sb.subscribe( &quot;aNiceTopic&quot;, messageHandler );</code></pre>
 
 </p>
 <pre><code class="lang-javascript">sb.subscribe([&quot;a&quot;, &quot;b&quot;], cb);</code></pre>
+<p>If you prefer a shorter method name you can use the alias <code>on</code>.
+
+</p>
 <a name="attache-and-detache"></a><h4>attache and detache</h4>
 <p>A subscription can be detached and attached again:
 
@@ -295,6 +302,9 @@ localized string.
 </p>
 <pre><code class="lang-javascript">scaleApp.i18n.setGlobal( myGlobalObj );</code></pre>
 <a name="mvc-very-simple-mvc"></a><h2>mvc - very simple MVC</h2>
+<p><img src="https://raw.github.com/flosse/scaleApp/master/mvc.png" alt="scaleApp mvc">
+
+</p>
 <p>Here is a sample use case for using the MVC plugin (in coffeescript).
 
 </p>
@@ -330,6 +340,38 @@ localized string.
     delete @m
     @sb.unsubscribe @</code></pre>
 <pre><code class="lang-coffeescript">scaleApp.publish &quot;changeName&quot;, &quot;Peter&quot;</code></pre>
+<a name="state-a-hrefhttps-enwikipediaorg-wiki-finite-state-machinefinite-state-machine-a"></a><h2>state - <a href="https://en.wikipedia.org/wiki/Finite_state_machine">Finite State Machine</a></h2>
+<p><img src="https://raw.github.com/flosse/scaleApp/master/fsm.png" alt="scaleApp fsm">
+
+</p>
+<pre><code class="lang-coffeescript">s = new scaleApp.StateMachine
+          start: &quot;a&quot;
+          states:
+            a:      { enter: (ev) -&gt; console.log &quot;entering state #{ev.to}&quot;  }
+            b:      { leave: (ev) -&gt; console.log &quot;leaving state #{ev.from}&quot; }
+            c:      { enter: [cb1, cb2], leave: cb3                         }
+            fatal:  { enter: -&gt; console.error &quot;something went wrong&quot;        }
+          transitions:
+            x:    { from: &quot;a&quot;        to: &quot;b&quot;     }
+            y:    { from: [&quot;b&quot;,&quot;c&quot;]  to: &quot;c&quot;     }
+            uups: { from: &quot;*&quot;        to: &quot;fatal&quot; }
+
+s.addState &quot;d&quot;, { enter: -&gt; }                 # add an additional state
+s.addState { y: {}, z: { enter: cb } }        # or add multiple states
+
+s.addTransition &quot;t&quot;, { from: &quot;b&quot;, to: &quot;d&quot; }   # add a transition
+s.can &quot;t&quot;                                     # false because &#39;a&#39; is current state
+s.can &quot;x&quot;                                     # true
+
+s.onLeave &quot;a&quot;, (transition, eventName, next) -&gt;
+  # ...
+  next()
+
+s.onEnter &quot;b&quot;, (transitioin, eventName, next) -&gt;
+  doSomething (err) -&gt; next err
+
+s.fire &quot;x&quot;
+s.current                                     # b</code></pre>
 <a name="permission-controll-all-messages"></a><h2>permission - controll all messages</h2>
 <p>If you include the <code>permission</code> plugin, all <code>Mediator</code> methods will be rejected
 by default to enforce you to permit any message method explicitely.
@@ -414,8 +456,8 @@ For more information have a look at
 </div>
         <footer id="footer">
             Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
-            <a href="#top">Back to top</a> - <a href="all.html">Everything on a single page</a>
-            - <a href="?print=1">Print current page</a> - <a href="all.html?print=1">Print all pages</a>
+            <a href="#top">Back to top</a> - <a href="/all.html">Everything on a single page</a>
+            - <a href="?print=1">Print current page</a> - <a href="/all.html?print=1">Print all pages</a>
             
                 <a href="https://github.com/flosse/scaleApp" id="fork-me-on-github">Fork me on Github</a>
             
