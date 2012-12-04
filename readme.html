@@ -63,6 +63,8 @@
                                 
                                     <li><a href="/readme.html#publish-subscribe">Publish/Subscribe</a></li>
                                 
+                                    <li><a href="/readme.html#flow-control">Flow control</a></li>
+                                
                             </ol>
                         
                     </li>
@@ -91,7 +93,25 @@
                     </li>
                 
                     <li>
+                        <a href="/readme.html#existing-modules">Existing modules</a>
+                        
+                            <ol>
+                                
+                            </ol>
+                        
+                    </li>
+                
+                    <li>
                         <a href="/readme.html#build-browser-bundles">Build browser bundles</a>
+                        
+                            <ol>
+                                
+                            </ol>
+                        
+                    </li>
+                
+                    <li>
+                        <a href="/readme.html#changelog">Changelog</a>
                         
                             <ol>
                                 
@@ -169,12 +189,13 @@ clean and scaleable architecture.
 <a name="features"></a><h2>Features</h2>
 <ul>
 <li>loose coupling of modules</li>
-<li>small &amp; simple</li>
-<li>no serverside dependencies</li>
+<li>small (about 340 sloc / 10k min / 3.4k gz)</li>
+<li>no dependencies</li>
 <li>modules can be tested separately</li>
 <li>replacing any module without affecting other modules</li>
 <li>extendable with plugins</li>
 <li>browser and node.js support</li>
+<li>flow control</li>
 </ul>
 <a name="extendable"></a><h2>Extendable</h2>
 <p>scaleApp itself is very small but it can be extended with plugins. There already
@@ -184,8 +205,8 @@ you can easily define your own one.
 </p>
 <a name="download-latest-version"></a><h2>Download latest version</h2>
 <ul>
-<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.8">scaleApp 0.3.8.tar.gz</a></li>
-<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.8">scaleApp 0.3.8.zip</a></li>
+<li><a href="https://github.com/flosse/scaleApp/tarball/v0.3.9">scaleApp 0.3.9.tar.gz</a></li>
+<li><a href="https://github.com/flosse/scaleApp/zipball/v0.3.9">scaleApp 0.3.9.zip</a></li>
 </ul>
 <a name="quick-start"></a><h1>Quick Start</h1>
 <p>Link <code>scaleApp.min.js</code> in your HTML file:
@@ -195,8 +216,12 @@ you can easily define your own one.
 <p>If you&#39;re going to use it with node:
 
 </p>
-<pre><code class="lang-shell">sudo npm -g install scaleapp</code></pre>
+<pre><code class="lang-shell">npm install scaleapp</code></pre>
 <pre><code class="lang-javascript">var sa = require(&quot;scaleapp&quot;);</code></pre>
+<p>or use <a href="http://twitter.github.com/bower/">bower</a>:
+
+</p>
+<pre><code>bower install scaleapp</code></pre>
 <a name="register-modules"></a><h2>Register modules</h2>
 <pre><code class="lang-javascript">scaleApp.register( &quot;myModuleId&quot;, function( sb ){
   return {
@@ -225,6 +250,8 @@ start. The <code>destroy</code> function is called when the module has to shut d
 <pre><code class="lang-javascript">scaleApp.lsModules() // returns an array of module names</code></pre>
 <a name="show-running-instances"></a><h3>Show running instances</h3>
 <pre><code class="lang-javascript">scaleApp.lsInstances() // returns an array of instance names</code></pre>
+<a name="show-registered-plugins"></a><h3>Show registered plugins</h3>
+<pre><code class="lang-javascript">scaleApp.lsPlugins() // returns an array of plugin names</code></pre>
 <a name="asynchronous-initialization"></a><h2>Asynchronous initialization</h2>
 <p>You can also init or destroy you module in a asynchronous way:
 
@@ -377,6 +404,35 @@ sub.attach(); // receive upcoming messages</code></pre>
 
 </p>
 <pre><code class="lang-javascript">sb.unsubscribe(&quot;channelName&quot;);</code></pre>
+<a name="flow-control"></a><h2>Flow control</h2>
+<a name="series"></a><h3>Series</h3>
+<pre><code class="lang-javascript">var task1 = function(next){
+  setTimeout(function(){next(null, &quot;one&quot;);},0);
+};
+
+var task2 = function(next){
+  next(null, &quot;two&quot;);
+};
+
+scaleApp.util.runSeries([task1, task2], function(err, results){
+  // result is [&quot;one&quot;, &quot;two&quot;]
+});</code></pre>
+<a name="waterfall"></a><h3>Waterfall</h3>
+<pre><code class="lang-javascript">var task1 = function(next){
+  setTimeout(function(){
+    next(null, &quot;one&quot;, &quot;two&quot;);
+  },0);
+};
+
+var task2 = function(res1, res2, next){
+  // res1 is &quot;one&quot;
+  // res2 is &quot;two&quot;
+  next(null, &quot;yeah!&quot;);
+};
+
+scaleApp.util.runWaterfall([task1, task2], function(err, result){
+  // result is &quot;yeah!&quot;
+});</code></pre>
 <a name="plugins"></a><h1>Plugins</h1>
 <a name="i18n-multi-language-uis"></a><h2>i18n - Multi language UIs</h2>
 <p>Link <code>scaleApp.i18n.min.js</code> in your HTML file:
@@ -491,16 +547,29 @@ s.current                                     # b</code></pre>
 by default to enforce you to permit any message method explicitely.
 
 </p>
-<pre><code class="lang-coffeescript">scaleApp.addPermission &quot;instanceA&quot;, &quot;subscribe&quot;
-scaleApp.addPermission &quot;instanceB&quot;, &quot;publish&quot;</code></pre>
-<p>Now <code>instanceA</code> is allowed to subscribe to a channel but <code>instanceB</code> cannot
-subscribe. Therefore <code>instanceB</code> can publish data and <code>instanceB</code> can not.
+<pre><code class="lang-coffeescript">scaleApp.permission.add &quot;instanceA&quot;, &quot;subscribe&quot;, &quot;a&quot;
+scaleApp.permission.add &quot;instanceB&quot;, &quot;publish&quot;, [&quot;b&quot;, &quot;c&quot;]</code></pre>
+<p>Now <code>instanceA</code> is allowed to subscribe to channel <code>a</code> but <code>instanceB</code> cannot
+subscribe to it. Therefore <code>instanceB</code> can publish data on channel <code>a</code> and
+<code>instanceB</code> can not.
 
 </p>
 <p>Of course you can remove a permission at any time:
 
 </p>
-<pre><code class="lang-coffeescript">scaleApp.removePermission &quot;moduleA&quot;, &quot;publish&quot;</code></pre>
+<pre><code class="lang-coffeescript">scaleApp.permission.remove &quot;moduleA&quot;, &quot;publish&quot;, &quot;x&quot;</code></pre>
+<p>Or remove the subscribe permissions of all channels:
+
+</p>
+<pre><code class="lang-coffeescript">scaleApp.permission.remove &quot;moduleB&quot;, &quot;subscribe&quot;</code></pre>
+<a name="strophe-xmpp-plugin"></a><h3>strophe - XMPP plugin</h3>
+<p>This is an adapter plugin for <a href="http://strophe.im/strophejs/">Strophe.js</a> with
+some helpful features (e.g. automatically reconnect on page refresh).
+
+</p>
+<pre><code class="lang-javascript">scaleApp.xmpp.login(&quot;myjid@server.tld&quot;, &quot;myPassword&quot;);
+scaleApp.xmpp.logout();
+scaleApp.xmpp.jid       // the current JID</code></pre>
 <a name="util-some-helper-functions"></a><h2>util - some helper functions</h2>
 <ul>
 <li><code>sb.mixin(receivingClass, givingClass, override=false)</code></li>
@@ -533,23 +602,84 @@ class MyModule
   constructor: (@sb) -&gt;
   init: -&gt; @sb.appendFoo()  # appends &quot;foo&quot; to the container
   destroy: -&gt;</code></pre>
+<a name="existing-modules"></a><h1>Existing modules</h1>
+<p>You can find some example modules in <code>src/modules/</code>.
+
+</p>
 <a name="build-browser-bundles"></a><h1>Build browser bundles</h1>
-<p>Just type
-
-</p>
-<pre><code class="lang-shell">cake bundle</code></pre>
-<p>that will create <code>scaleApp.js</code>, <code>scaleApp.min.js</code>, <code>scaleApp.full.js</code> and
-<code>scaleApp.full.min.js</code> whithin the <code>build/bundles/</code> directory.
-
-</p>
 <p>If you want scaleApp bundled with special plugins type
 
 </p>
-<pre><code class="lang-shell">cake -p [PLUGIN_NAME] bundle</code></pre>
-<p>e.g. <code>cake -p dom,mvc bundle</code> creates the file <code>scaleApp.custom.js</code> that
+<pre><code class="lang-shell">grunt custom[:PLUGIN_NAME]</code></pre>
+<p>e.g. <code>cake custom:dom:mvc</code> creates the file <code>scaleApp.custom.js</code> that
 contains scaleApp itself the dom plugin and the mvc plugin.
 
 </p>
+<a name="changelog"></a><h1>Changelog</h1>
+<a name="v039-12-2012"></a><h4>v0.3.9 (12-2012)</h4>
+<ul>
+<li>extended clock module</li>
+<li>grunt as build systemt</li>
+<li>added waterfall flow control method</li>
+<li>improved permission plugin</li>
+<li>improved state plugin (thanks to Strathausen)</li>
+<li>added xmpp (stropje.js) plugin</li>
+<li>added a simple clock module</li>
+<li>added <a href="http://twitter.github.com/bower/">bower</a> support</li>
+<li>added this changelog</li>
+</ul>
+<a name="v038-08-2012"></a><h4>v0.3.8 (08-2012)</h4>
+<ul>
+<li>bug fixes</li>
+<li>added support for async. callback of the <code>publish</code> method</li>
+<li>added amd support</li>
+</ul>
+<a name="v037-07-2012"></a><h4>v0.3.7 (07-2012)</h4>
+<ul>
+<li>bug fixes</li>
+<li>added permission plugin</li>
+<li>ported specs to buster.js</li>
+<li>support for global i18n properties</li>
+</ul>
+<a name="v036-03-2012"></a><h4>v0.3.6 (03-2012)</h4>
+<ul>
+<li>support for async. and sync. module initialization</li>
+</ul>
+<a name="v035-03-2012"></a><h4>v0.3.5 (03-2012)</h4>
+<ul>
+<li>simpified Mediator code</li>
+</ul>
+<a name="v034-03-2012"></a><h4>v0.3.4 (03-2012)</h4>
+<ul>
+<li>bugfixes</li>
+<li>added <code>lsModules</code> and <code>lsInstances</code></li>
+<li>improved README</li>
+</ul>
+<a name="v033-02-2012"></a><h4>v0.3.3 (02-2012)</h4>
+<ul>
+<li>run tests with jasmine-node instead of JSTestDriver</li>
+<li>added travis testing</li>
+<li>improved README</li>
+</ul>
+<a name="v032-01-2012"></a><h4>v0.3.2 (01-2012)</h4>
+<ul>
+<li>bugfixes</li>
+<li>improved Mediator</li>
+</ul>
+<a name="v030-11-2011"></a><h4>v0.3.0 (11-2011)</h4>
+<ul>
+<li>ported to Coffee-Script</li>
+<li>removed jQuery dependency</li>
+</ul>
+<a name="v020-07-2011"></a><h4>v0.2.0 (07-2011)</h4>
+<ul>
+<li>bugfixes</li>
+<li>improvements</li>
+</ul>
+<a name="v010-02-2011"></a><h4>v0.1.0 (02-2011)</h4>
+<ul>
+<li>first release</li>
+</ul>
 <a name="testing"></a><h1>Testing</h1>
 <pre><code class="lang-shell">npm test</code></pre>
 <a name="demo"></a><h1>Demo</h1>
