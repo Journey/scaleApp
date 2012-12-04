@@ -5,17 +5,52 @@ describe "stateMachine plugin", ->
   before ->
 
     if typeof(require) is "function"
-      @scaleApp  = require "../../src/scaleApp"
+      @scaleApp = require "../../src/scaleApp"
       @scaleApp.registerPlugin require "../../src/plugins/scaleApp.state"
-      @machine = new @scaleApp.StateMachine
 
     else if window?
-      @scaleApp  = window.scaleApp
+      @scaleApp = window.scaleApp
+
+    @machine = new @scaleApp.StateMachine
 
   after -> @scaleApp.unregisterAll()
 
   it "installs it to the core", ->
     (expect typeof @scaleApp.StateMachine).toEqual "function"
+
+  describe "constructor", ->
+    it "takes a transitions object with multiple transitions", ->
+      machine = new @scaleApp.StateMachine
+        states: ["a", "b", "c"]
+        transitions:
+          x: {from: "a", to: "b"}
+          y: {from: "b", to: "c"}
+      (expect machine.transitions.x).toEqual {from: "a", to: "b"}
+      (expect machine.transitions.y).toEqual {from: "b", to: "c"}
+
+    it "emits onEnter for start state", (done) ->
+      onEnter = (t, channel) ->
+        (expect channel).toBe 'a/enter'
+        (expect t).toBe undefined
+        done()
+      machine = new @scaleApp.StateMachine
+        start: 'a'
+        states:
+          a: {enter: onEnter}
+
+    it "registers onLeave for start state", (done) ->
+      onLeave = (t, channel) ->
+        (expect channel).toBe 'a/leave'
+        (expect t).toEqual {from: "a", to: "b"}
+        done()
+      machine = new @scaleApp.StateMachine
+        start: 'a'
+        states:
+          a: {leave: onLeave}
+          b: {}
+        transitions:
+          x: {from: "a", to: "b"}
+      machine.fire 'x'
 
   describe "addState method", ->
 
@@ -51,7 +86,7 @@ describe "stateMachine plugin", ->
       @machine.addState "toState"
       (expect @machine.addTransition "t", from: "fromState", to: "toState").toBe true
 
-    it "returns false if one of the arguments is not a string", ->
+    it "returns false if one of the arguments is neither string, nor array", ->
       (expect @machine.addTransition 0,   from: "fromState", to: "toState").toBe false
       (expect @machine.addTransition "x", from: 1,           to: "toState").toBe false
       (expect @machine.addTransition "x", from: "y",         to:  2).toBe false
@@ -146,9 +181,23 @@ describe "stateMachine plugin", ->
         (expect @machine.current).toEqual "a"
         done()
 
+    it "emits 'leaveChannel' for current state", (done) ->
+      @machine.current = "a"
+      @machine.addState ["a", "b", "c"]
+      @machine.addTransition "x", from: ["a", "b"], to: "c"
+      @machine.onLeave "a", ->
+        done()
+      (expect @machine.fire "x").toEqual true
+
   describe "can method", ->
     it "returns true if transition can be fired", ->
       @machine.addState ["a", "b"]
       @machine.addTransition "x", from: "a", to: "b"
+      @machine.current = "a"
+      (expect @machine.can "x").toEqual true
+
+    it "returns true if current state is in transition.from", ->
+      @machine.addState ["a", "b", "c"]
+      @machine.addTransition "x", from: ["a", "b"], to: "c"
       @machine.current = "a"
       (expect @machine.can "x").toEqual true

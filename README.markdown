@@ -31,12 +31,13 @@ clean and scaleable architecture.
 ## Features
 
 + loose coupling of modules
-+ small & simple
-+ no serverside dependencies
++ small (about 340 sloc / 10k min / 3.4k gz)
++ no dependencies
 + modules can be tested separately
 + replacing any module without affecting other modules
 + extendable with plugins
 + browser and node.js support
++ flow control
 
 ## Extendable
 
@@ -46,8 +47,8 @@ you can easily define your own one.
 
 ## Download latest version
 
-- [scaleApp 0.3.8.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.8)
-- [scaleApp 0.3.8.zip](https://github.com/flosse/scaleApp/zipball/v0.3.8)
+- [scaleApp 0.3.9.tar.gz](https://github.com/flosse/scaleApp/tarball/v0.3.9)
+- [scaleApp 0.3.9.zip](https://github.com/flosse/scaleApp/zipball/v0.3.9)
 
 # Quick Start
 
@@ -60,12 +61,16 @@ Link `scaleApp.min.js` in your HTML file:
 If you're going to use it with node:
 
 ```shell
-sudo npm -g install scaleapp
+npm install scaleapp
 ```
 
 ```javascript
 var sa = require("scaleapp");
 ```
+
+or use [bower](http://twitter.github.com/bower/):
+
+    bower install scaleapp
 
 ## Register modules
 
@@ -105,6 +110,12 @@ scaleApp.lsModules() // returns an array of module names
 
 ```javascript
 scaleApp.lsInstances() // returns an array of instance names
+```
+
+### Show registered plugins
+
+```javascript
+scaleApp.lsPlugins() // returns an array of plugin names
 ```
 
 ## Asynchronous initialization
@@ -306,6 +317,45 @@ Or remove all subscriptions from a channel:
 sb.unsubscribe("channelName");
 ```
 
+## Flow control
+
+### Series
+```javascript
+var task1 = function(next){
+  setTimeout(function(){next(null, "one");},0);
+};
+
+var task2 = function(next){
+  next(null, "two");
+};
+
+scaleApp.util.runSeries([task1, task2], function(err, results){
+  // result is ["one", "two"]
+});
+```
+
+### Waterfall
+
+```javascript
+var task1 = function(next){
+  setTimeout(function(){
+    next(null, "one", "two");
+  },0);
+};
+
+var task2 = function(res1, res2, next){
+  // res1 is "one"
+  // res2 is "two"
+  next(null, "yeah!");
+};
+
+scaleApp.util.runWaterfall([task1, task2], function(err, result){
+  // result is "yeah!"
+});
+
+```
+
+
 # Plugins
 
 ## i18n - Multi language UIs
@@ -448,17 +498,35 @@ If you include the `permission` plugin, all `Mediator` methods will be rejected
 by default to enforce you to permit any message method explicitely.
 
 ```coffeescript
-scaleApp.addPermission "instanceA", "subscribe"
-scaleApp.addPermission "instanceB", "publish"
+scaleApp.permission.add "instanceA", "subscribe", "a"
+scaleApp.permission.add "instanceB", "publish", ["b", "c"]
 ```
 
-Now `instanceA` is allowed to subscribe to a channel but `instanceB` cannot
-subscribe. Therefore `instanceB` can publish data and `instanceB` can not.
+Now `instanceA` is allowed to subscribe to channel `a` but `instanceB` cannot
+subscribe to it. Therefore `instanceB` can publish data on channel `a` and
+`instanceB` can not.
 
 Of course you can remove a permission at any time:
 
 ```coffeescript
-scaleApp.removePermission "moduleA", "publish"
+scaleApp.permission.remove "moduleA", "publish", "x"
+```
+
+Or remove the subscribe permissions of all channels:
+
+```coffeescript
+scaleApp.permission.remove "moduleB", "subscribe"
+```
+
+### strophe - XMPP plugin
+
+This is an adapter plugin for [Strophe.js](http://strophe.im/strophejs/) with
+some helpful features (e.g. automatically reconnect on page refresh).
+
+```javascript
+scaleApp.xmpp.login("myjid@server.tld", "myPassword");
+scaleApp.xmpp.logout();
+scaleApp.xmpp.jid       // the current JID
 ```
 
 ## util - some helper functions
@@ -498,23 +566,86 @@ class MyModule
   init: -> @sb.appendFoo()  # appends "foo" to the container
   destroy: ->
 ```
+
+# Existing modules
+
+You can find some example modules in `src/modules/`.
+
 # Build browser bundles
-
-Just type
-
-```shell
-cake bundle
-```
-that will create `scaleApp.js`, `scaleApp.min.js`, `scaleApp.full.js` and
-`scaleApp.full.min.js` whithin the `build/bundles/` directory.
 
 If you want scaleApp bundled with special plugins type
 
 ```shell
-cake -p [PLUGIN_NAME] bundle
+grunt custom[:PLUGIN_NAME]
 ```
-e.g. `cake -p dom,mvc bundle` creates the file `scaleApp.custom.js` that
+e.g. `cake custom:dom:mvc` creates the file `scaleApp.custom.js` that
 contains scaleApp itself the dom plugin and the mvc plugin.
+
+# Changelog
+
+#### v0.3.9 (12-2012)
+
+- extended clock module
+- grunt as build systemt
+- added waterfall flow control method
+- improved permission plugin
+- improved state plugin (thanks to Strathausen)
+- added xmpp (stropje.js) plugin
+- added a simple clock module
+- added [bower](http://twitter.github.com/bower/) support
+- added this changelog
+
+#### v0.3.8 (08-2012)
+
+- bug fixes
+- added support for async. callback of the `publish` method
+- added amd support
+
+#### v0.3.7 (07-2012)
+
+- bug fixes
+- added permission plugin
+- ported specs to buster.js
+- support for global i18n properties
+
+#### v0.3.6 (03-2012)
+
+- support for async. and sync. module initialization
+
+#### v0.3.5 (03-2012)
+
+- simpified Mediator code
+
+#### v0.3.4 (03-2012)
+
+- bugfixes
+- added `lsModules` and `lsInstances`
+- improved README
+
+#### v0.3.3 (02-2012)
+
+- run tests with jasmine-node instead of JSTestDriver
+- added travis testing
+- improved README
+
+#### v0.3.2 (01-2012)
+
+- bugfixes
+- improved Mediator
+
+#### v0.3.0 (11-2011)
+
+- ported to Coffee-Script
+- removed jQuery dependency
+
+#### v0.2.0 (07-2011)
+
+- bugfixes
+- improvements
+
+#### v0.1.0 (02-2011)
+
+ - first release
 
 # Testing
 

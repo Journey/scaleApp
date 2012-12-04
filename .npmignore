@@ -2,9 +2,16 @@ src/
 spec/
 build/
 bundles/
+lib/
 Cakefile
+grunt.js
+buster.js
 .gitignore
 .npmignore
 .travis.yml
 *.log
 *.swp
+*.coffee
+*.svg
+*.min.js
+*.full*.js

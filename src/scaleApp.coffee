@@ -1,14 +1,8 @@
-###
-This program is distributed under the terms of the MIT license.
-Copyright (c) 2011-2012 Markus Kohlhase (mail@markus-kohlhase.de)
-###
+# constants
+VERSION   = "0.3.9"
 
-if module?.exports? and typeof require is "function" and not require.amd?
-  Mediator  = require "./Mediator"
-  Sandbox   = require "./Sandbox"
-  util      = require "./Util"
-
-VERSION = "0.3.8"
+checkType = (type, val, name) ->
+  throw new TypeError "#{name} has to be a #{type}" unless typeof val is type
 
 modules       = {}
 instances     = {}
@@ -22,8 +16,7 @@ onInstantiateFunctions = _always: []
 
 # registers a function that gets executed when a module gets instantiated.
 onInstantiate = (fn, moduleId) ->
-
-  throw new Error "expect a function as parameter" unless typeof fn is "function"
+  checkType "function", fn, "parameter"
   entry = { context: @, callback: fn }
 
   if typeof moduleId is "string"
@@ -77,15 +70,15 @@ createInstance = (moduleId, instanceId=moduleId, opt) ->
 
 addModule = (moduleId, creator, opt) ->
 
-  throw new TypeError "module ID has to be a string"             unless typeof moduleId  is "string"
-  throw new TypeError "creator has to be a constructor function" unless typeof creator   is "function"
-  throw new TypeError "option parameter has to be an object"     unless typeof opt       is "object"
+  checkType "string",   moduleId, "module ID"
+  checkType "function", creator,  "creator"
+  checkType "object",   opt,      "option parameter"
 
   modObj = new creator()
 
-  throw new TypeError "creator has to return an object"          unless typeof modObj          is "object"
-  throw new TypeError "module has to have an init function"      unless typeof modObj.init     is "function"
-  throw new TypeError "module has to have a destroy function"    unless typeof modObj.destroy  is "function"
+  checkType "object",   modObj,         "the return value of the creator"
+  checkType "function", modObj.init,    "'init' of the module"
+  checkType "function", modObj.destroy, "'destroy' of the module "
 
   throw new TypeError "module #{moduleId} was already registered" if modules[moduleId]?
 
@@ -96,7 +89,6 @@ addModule = (moduleId, creator, opt) ->
   true
 
 register = (moduleId, creator, opt = {}) ->
-
   try
     addModule moduleId, creator, opt
   catch e
@@ -104,27 +96,25 @@ register = (moduleId, creator, opt = {}) ->
     false
 
 setInstanceOptions = (instanceId, opt) ->
-  throw new TypeError "instance ID has to be a string"        unless typeof instanceId  is "string"
-  throw new TypeError "option parameter has to be an object"  unless typeof opt         is "object"
+  checkType "string", instanceId, "instance ID"
+  checkType "object", opt, "option parameter"
   instanceOpts[instanceId] ?= {}
   instanceOpts[instanceId][k] = v for k,v of opt
 
-unregister = (id) ->
-  if modules[id]?
-    delete modules[id]
-    true
-  else
-    false
+unregister = (id, type) ->
+  if type[id]?
+    delete type[id]
+    return true
+  false
 
-unregisterAll = -> unregister id for id of modules
+unregisterAll = (type) -> unregister id, type for id of type
 
 start = (moduleId, opt={}) ->
 
   try
-
-    throw new Error "module ID has to be a string" unless typeof moduleId is "string"
-    throw new Error "second parameter has to be an object" unless typeof opt is "object"
-    throw new Error "module does not exist" unless modules[moduleId]?
+    checkType "string", moduleId, "module ID"
+    checkType "object", opt, "second parameter"
+    throw new Error "module doesn't exist" unless modules[moduleId]?
 
     instance = createInstance moduleId, opt.instanceId, opt.options
 
@@ -202,32 +192,27 @@ startAll = (cb, opt) ->
 stopAll = (cb) ->
   util.doForAll (id for id of instances), stop, cb
 
-coreKeywords = [ "VERSION", "register", "unregister", "registerPlugin", "start"
-  "stop", "startAll", "stopAll", "publish", "subscribe", "unsubscribe", "on",
-  "emit", "setInstanceOptions", "Mediator", "Sandbox", "unregisterAll",
-  "uniqueId", "lsModules", "lsInstances"]
-
 sandboxKeywords = [ "core", "instanceId", "options", "publish", "emit", "on"
   "subscribe", "unsubscribe" ]
 
-lsModules = -> (id for id,m of modules)
-
-lsInstances = -> (id for id,m of instances)
+ls = (o) -> (id for id,m of o)
 
 registerPlugin = (plugin) ->
 
+  RESERVED_ERROR = new Error "plugin uses reserved keyword"
+
   try
-    throw new Error "plugin has to be an object" unless typeof plugin is "object"
-    throw new Error "plugin has no id" unless typeof plugin.id is "string"
+    checkType "object", plugin, "plugin"
+    checkType "string", plugin.id, "'id' of plugin"
 
     if typeof plugin.sandbox is "function"
-      for k of new plugin.sandbox new Sandbox core, ""
-        throw new Error "plugin uses reserved keyword" if k in sandboxKeywords
+      for k of new plugin.sandbox new Sandbox core, ''
+        throw RESERVED_ERROR if k in sandboxKeywords
       Sandbox::[k] = v for k, v of plugin.sandbox::
 
     if typeof plugin.core is "object"
       for k of plugin.core
-        throw new Error "plugin uses reserved keyword" if k in coreKeywords
+        throw RESERVED_ERROR if k in coreKeywords
       for k,v of plugin.core
         core[k] = v
         exports?[k] = v
@@ -246,17 +231,20 @@ registerPlugin = (plugin) ->
 core =
   VERSION: VERSION
   register: register
-  unregister: unregister
-  unregisterAll: unregisterAll
+  unregister: (id) -> unregister id, modules
+  unregisterAll: -> unregisterAll modules
   registerPlugin: registerPlugin
+  unregisterPlugin: (id) -> unregister id, plugins
+  unregisterAllPlugins: -> unregisterAll plugins
   setInstanceOptions: setInstanceOptions
   start: start
   stop: stop
   startAll: startAll
   stopAll: stopAll
   uniqueId: util.uniqueId
-  lsInstances: lsInstances
-  lsModules: lsModules
+  lsInstances: -> ls instances
+  lsModules: -> ls modules
+  lsPlugins: -> ls plugins
   util: util
   Mediator: Mediator
   Sandbox: Sandbox
@@ -265,6 +253,8 @@ core =
   unsubscribe:  -> mediator.unsubscribe.apply mediator, arguments
   publish:      -> mediator.publish.apply mediator, arguments
   emit:         -> mediator.publish.apply mediator, arguments
+
+coreKeywords = (k for k,v of core)
 
 module.exports  = core if module?.exports?
 if define?.amd?

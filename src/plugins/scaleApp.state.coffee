@@ -9,14 +9,15 @@ class StateMachine extends scaleApp.Mediator
     super()
     @states      = []
     @transitions = {}
+    if opts.states?
+      @addState opts.states
     if opts.start?
       @addState opts.start
       @start   = opts.start
       @current = opts.start
-    if opts.states?
-      @addState s for s in opts.states
+      @emit enterChannel @start
     if opts.transitions?
-      @addTransition id,t for id,t in opts.transitions
+      @addTransition id,t for id,t of opts.transitions
 
   start:    null
   current:  null
@@ -65,8 +66,7 @@ class StateMachine extends scaleApp.Mediator
   fire: (id, callback=->) =>
     t = @transitions[id]
     return false unless t? and @can id
-
-    @emit leaveChannel(t.from), t, (err) =>
+    @emit leaveChannel(@current), t, (err) =>
       if err?
         callback err
       else
@@ -78,7 +78,7 @@ class StateMachine extends scaleApp.Mediator
   can: (id) ->
     t = @transitions[id]
     t?.from is @current or
-    @current in t or
+    @current in t.from or
     t.from is "*"
 
 plugin =
